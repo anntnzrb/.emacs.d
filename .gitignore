@@ -1,6 +1,7 @@
 # ignore everything except for self and a few files
 /*
 !.gitignore
+!COPYING
 
 !/snippets
 
