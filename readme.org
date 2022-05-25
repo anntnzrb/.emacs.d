@@ -1078,6 +1078,8 @@ shared settings for Lisp-like languages.
 
 #+begin_src emacs-lisp
 (defun annt--racket-mode-setup ()
+  (interactive)
+
   "Sets up mode for Racket."
   (when (executable-find "racket")
     (straight-use-package 'racket-mode)
@@ -1094,6 +1096,8 @@ shared settings for Lisp-like languages.
 #+begin_src emacs-lisp
 (defun annt--fennel-mode-setup ()
   "Sets up mode for Fennel."
+  (interactive)
+
   (when (executable-find "lua")
     (straight-use-package 'fennel-mode)
     (fennel-mode)))
@@ -1105,6 +1109,8 @@ shared settings for Lisp-like languages.
 
 #+begin_src emacs-lisp
 (defun annt--nix-mode-setup ()
+  (interactive)
+
   "Sets up mode for Nix."
   (when (executable-find "nix")
     (straight-use-package 'nix-mode)
@@ -1122,6 +1128,8 @@ shared settings for Lisp-like languages.
 #+begin_src emacs-lisp
 (defun annt--haskell-mode-setup ()
   "Sets up mode for Haskell."
+  (interactive)
+
   (when (executable-find "ghc")
     (straight-use-package 'haskell-mode)
 
@@ -1149,18 +1157,20 @@ shared settings for Lisp-like languages.
 | [[https://github.com/immerrr/lua-mode][lua-mode]] | /Lua/ support for Emacs |
 
 #+begin_src emacs-lisp
-(defun annt--lua-mode-hook ()
+(defun annt--lua-mode-setup ()
   "Sets up mode for Lua."
+  (interactive)
+
   (straight-use-package 'lua-mode)
 
   (after! lua-mode
-    (setq lua-indent-level 2))
+    (setq lua-indent-level 2)
 
-  (add-hook! 'lua-mode-hook (list #'lsp-deferred
-                                  #'aggressive-indent-mode))
+    (add-hook! 'lua-mode-hook (list #'lsp-deferred
+                                    #'aggressive-indent-mode)))
   (lua-mode))
 
-(add-to-list 'auto-mode-alist '("\\.lua\\'" . annt--haskell-mode-setup))
+(add-to-list 'auto-mode-alist '("\\.lua\\'" . annt--lua-mode-setup))
 #+end_src
 
 ** YAML
@@ -1170,6 +1180,8 @@ shared settings for Lisp-like languages.
 #+begin_src emacs-lisp
 (defun annt--yaml-mode-setup ()
   "Sets up mode for YAML."
+  (interactive)
+
   (straight-use-package 'yaml-mode)
 
   (after! yaml-mode
