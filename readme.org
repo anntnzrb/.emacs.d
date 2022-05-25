@@ -584,7 +584,6 @@ however, if set properly this can be a catastrophe saver.
 (setq mode-require-final-newline         t)
 (setq-default tab-width                  4)
 (setq-default indent-tabs-mode         nil)
-(setq-default show-trailing-whitespace   t)
 (setq-default fill-column               79)
 
 ;; line numbers
@@ -593,7 +592,14 @@ however, if set properly this can be a catastrophe saver.
   (setq display-line-numbers 'relative)
   (setq display-fill-column-indicator-column (+ fill-column 1)))
 
-(add-hook! '(prog-mode-hook text-mode-hook) #'annt--line-numbers-setup)
+;; trailing withespaces
+(defun annt--trailing-whitespace-setup ()
+  "Sets up `show-trailing-whitespace'."
+  (setq show-trailing-whitespace t))
+
+(add-hook! '(prog-mode-hook text-mode-hook)
+           (list  #'annt--line-numbers-setup
+                  #'annt--trailing-whitespace-setup))
 
 ;; display vertical column at line limit
 (global-display-fill-column-indicator-mode)
