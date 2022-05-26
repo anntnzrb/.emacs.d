@@ -27,19 +27,25 @@
 ;; configuration should remain elsewhere.  This fill is only valid for GNU
 ;; Emacs 27.1+.  Gets loaded before the 'init.el' file.
 
+;; This file is loaded before 'package.el' and the first graphical frame are
+;; initialized.
+
+;; You should find more information regarding this particular file at
+;; <https://www.gnu.org/software/emacs/manual/html_node/emacs/Early-Init-File.html>.
+
 ;;; Code:
 
 ;; check if using minimum required version
 (let ((min-ver "28.0"))
   (when (version< emacs-version min-ver)
-    (error "Your version of GNU Emacs (v%s) is outdated, you need at least v%s"
+    (error "Your version of GNU Emacs v%s is outdated, you need at least v%s"
            emacs-version min-ver)))
 
 ;; The garbage collector threshold is increased here to prevent it from
 ;; running at these early stages, the objective here is to reset it later.
 ;; Consider checking the 'init.el' file right next to this file for the
 ;; remaining instructions.
-;; WARNING :: Not adjusting this settings properly will lead to
+;; WARNING :: Improper adjustment of these settings properly may lead to
 ;; freezes/stuttering and unexpected behaviour.
 (setq gc-cons-threshold most-positive-fixnum)
 (setq gc-cons-percentage 0.6)
@@ -48,6 +54,7 @@
 (setq read-process-output-max (* 1024 1024))
 
 ;; Native Compilation
+;; > Emacs v28
 (if (and (fboundp 'native-comp-available-p)
          (native-comp-available-p))
     (progn

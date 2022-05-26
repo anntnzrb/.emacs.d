@@ -42,6 +42,9 @@
        (concat (or (getenv "XDG_CONFIG_HOME") (expand-file-name "~/.config"))
                "/emacs")))
 
+(setq frame-title-format (format "%%b - GNU Emacs [%s] @ %s"
+                                 window-system (system-name)))
+
 (defun annt--notify-and-log (msg)
   "Prints MSG and logs it to a file in `user-emacs-directory' directory."
   (message msg)
