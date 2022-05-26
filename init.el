@@ -1,4 +1,4 @@
-;;; init.el --- Initialization file of GNU Emacs -*- lexical-binding: t; -*-
+;;; init.el --- Initialization file of GNU Emacs -*- lexical-binding: t; no-byte-compile: t; -*-
 
 ;; Copyright (C) 2020-2022 anntnzrb
 
@@ -33,96 +33,22 @@
 
 ;;; Code:
 
-(defvar annt--emacs-config-file "readme"
-  "Base name of annt's configuration file.")
-
-;; explicitely set Emacs' directory for this profile
-(setq user-emacs-directory
-      (file-name-as-directory
-       (concat (or (getenv "XDG_CONFIG_HOME") (expand-file-name "~/.config"))
-               "/emacs")))
-
-(setq frame-title-format (format "%%b - GNU Emacs [%s] @ %s"
-                                 window-system (system-name)))
-
-(defun annt--notify-and-log (msg)
-  "Prints MSG and logs it to a file in `user-emacs-directory' directory."
-  (message msg)
-
-  ;; log to file (suppress stdout)
-  (let ((inhibit-message t)
-        (message-log-max nil))
-    (append-to-file
-     (format "[%s] :: %s\n" (current-time-string) msg)
-     nil
-     (expand-file-name "emacs.log" user-emacs-directory))))
-
-(defun annt--expand-emacs-file-name (file extension)
-  "Return canonical path to FILE to Emacs config with EXTENSION."
-  (locate-user-emacs-file
-   (concat file extension)))
-
-(defun annt--org-tangle-and-byte-compile (file target-file)
-  "Tangle given FILE to TARGET-FILE and byte-compile it."
-  (require 'ob-tangle)
-  (org-babel-tangle-file file target-file)
-  (byte-compile-file          target-file))
-
-(defun annt--update-emacs-config ()
-  "If configuration files were modified, update them with the latest changes.
-First it checks wether the literate configuration file (Org) was modified or
-not, only when there's a change it deletes the previously tangled ELisp code
-and re-tangles it, byte-compiles it afterwards."
-  (let* ((cfg-file annt--emacs-config-file)
-         (cfg-file-org
-          (annt--expand-emacs-file-name cfg-file ".org"))
-         (cfg-file-el
-          (annt--expand-emacs-file-name cfg-file ".el"))
-         (cfg-file-el-compiled
-          (annt--expand-emacs-file-name cfg-file ".elc"))
-         (cfg-file-org-last-modified
-          (file-attribute-modification-time (file-attributes cfg-file-org))))
-
-    (require 'org-macs)
-    (unless (org-file-newer-than-p cfg-file-el cfg-file-org-last-modified)
-      (annt--notify-and-log "Deleting old configurations for update...")
-      (delete-file cfg-file-el          t)
-      (delete-file cfg-file-el-compiled t)
-      (annt--org-tangle-and-byte-compile cfg-file-org cfg-file-el))))
-
-;; set working directory to `~' regardless of where Emacs was started from
-(cd (expand-file-name "~/"))
-
-;; configuration file initialization
-(let* ((cfg-file annt--emacs-config-file)
-       (cfg-file-org (annt--expand-emacs-file-name cfg-file ".org"))
-       (cfg-file-el  (annt--expand-emacs-file-name cfg-file ".el")))
-
-  ;; only tangle if tangled file does not exists
-  (unless (file-exists-p cfg-file-el)
-    (annt--notify-and-log "Literate configuration has not been tangled yet...")
-    (annt--notify-and-log "Proceeding to tangle & byte-compile configuration...")
-    (annt--org-tangle-and-byte-compile cfg-file-org cfg-file-el)
-    (annt--notify-and-log "Literate configuration was tangled & byte-compiled."))
-
-  ;; finally load the configuration file
-  (load-file cfg-file-el)
-  (annt--notify-and-log "Configuration loaded."))
-
-;; `kill-emacs-hook' used for startup time
-(add-hook 'kill-emacs-hook #'annt--update-emacs-config)
+(defvar swisschamp--file "swisschamp"
+  "Base name of Swisschamp's configuration file.")
 
 ;; WARNING: Reset garbage collector (should be at the end of this file)
 ;; After everything else is set-up, set the garbage collector to a considerable
 ;; non-archaic value.
-(defun annt--setup-gc ()
+(defun swisschamp--init-setup-gc ()
   "Sets up efficient garbage collector settings.
 The following values are modified: `gc-cons-threshold' and
-`gc-cons-percentage'."
+`gc-cons-percentage'
+
+NOTE: Garbage collector was also previously modified at 'early-init.el'."
   (setq gc-cons-threshold (* 20 1024 1024))
   (setq gc-cons-percentage 0.1))
 
-(defun annt--debug-init()
+(defun swisschamp--init-debug-init()
   "Displays information related to initialization."
   (let ((pkg-count 0)
         (init-time (emacs-init-time)))
@@ -135,14 +61,89 @@ The following values are modified: `gc-cons-threshold' and
     (when (boundp 'straight--profile-cache)
       (setq pkg-count (+ (hash-table-count straight--profile-cache) pkg-count)))
 
-    (annt--notify-and-log
+    (swisschamp--notify-and-log
      (format
       "GNU Emacs initialized in %s (%d pkgs) :: performed %d garbage collections."
       init-time pkg-count gcs-done))))
 
-;; `emacs-startup-hook' can be used to set this after init files are done
-(add-hook 'emacs-startup-hook #'annt--setup-gc)
-(add-hook 'emacs-startup-hook #'annt--debug-init)
+(defun swisschamp--notify-and-log (message)
+  "Prints MESSAGE and logs it to a file in `user-emacs-directory' directory."
+  (message message)
+
+  ;; log to file (suppress stdout)
+  (let ((inhibit-message t)
+        (message-log-max nil))
+    (append-to-file
+     (format "[%s] :: %s\n" (current-time-string) message)
+     nil
+     (expand-file-name "emacs.log" user-emacs-directory))))
+
+(defun swisschamp--init-expand-file-name (file extension)
+  "Return canonical path to FILE to Emacs config with EXTENSION."
+  (locate-user-emacs-file
+   (concat file extension)))
+
+(defun swisschamp--init-org-tangle-and-byte-compile (file target-file)
+  "Tangle given FILE to TARGET-FILE and byte-compile it."
+  (require 'ob-tangle)
+  (org-babel-tangle-file file target-file)
+  (byte-compile-file          target-file))
+
+(defun swisschamp--init-update-files ()
+  "If configuration files have been modified, update them.
+The Org file is compared with the tangled '.el' file; if the latter is older
+than the Org file, delete the '.el' file code and re-tangle it, byte-compile it
+afterwards."
+  (interactive)
+  (let* ((file swisschamp--file)
+         (file-org (swisschamp--init-expand-file-name file ".org"))
+         (file-el  (swisschamp--init-expand-file-name file ".el"))
+         (file-elc (swisschamp--init-expand-file-name file ".elc")))
+
+    (when (or (file-newer-than-file-p file-org file-el)
+              (not (file-exists-p file-elc)))
+      (swisschamp--notify-and-log "Deleting old configurations for update...")
+      (ignore-errors
+        (delete-file file-el  t)
+        (delete-file file-elc t))
+      (swisschamp--init-org-tangle-and-byte-compile file-org file-el))))
+
+(defun swisschamp--init-load-file ()
+  "Load the configuration file.
+This step should be done after tangling & byte-compiling."
+  (let* ((file swisschamp--file)
+         (file-org (swisschamp--init-expand-file-name file ".org"))
+         (file-el  (swisschamp--init-expand-file-name file ".el")))
+
+    ;; only tangle if '.el' file does not exists
+    (unless (file-exists-p file-el)
+      (swisschamp--notify-and-log "Literate configuration has not been tangled yet...")
+      (swisschamp--notify-and-log "Proceeding to tangle & byte-compile configuration...")
+      (swisschamp--init-org-tangle-and-byte-compile file-org file-el)
+      (swisschamp--notify-and-log "Literate configuration was tangled & byte-compiled."))
+
+    ;; finally load the configuration file
+    (load file-el nil 'nomessage 'nosuffix)
+    (swisschamp--notify-and-log "Swisschamp configuration loaded.")))
+
+;;; Apply everything
+
+;; a few settings...
+(setq frame-title-format
+      (format "%%b - GNU Emacs [%s] @ %s" window-system (system-name)))
+
+;; set working directory to `~' regardless of where Emacs was started from
+(cd (expand-file-name "~/"))
+
+(add-hook 'emacs-startup-hook #'swisschamp--init-setup-gc)
+(add-hook 'emacs-startup-hook #'swisschamp--init-debug-init)
+
+;; set to both hooks to ensure config is always updated and byte-compiled, for
+;; startup times it's possible to only keep `kill-emacs-hook'.
+(add-hook 'emacs-startup-hook #'swisschamp--init-update-files)
+(add-hook 'kill-emacs-hook    #'swisschamp--init-update-files)
+
+(swisschamp--init-load-file)
 
 (provide 'init)
 ;;; init.el ends here

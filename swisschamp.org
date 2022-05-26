@@ -100,11 +100,7 @@ this literate configuration into /ELisp/ code and load it.
 =lexical-binding= should make /Emacs/ a tiny bit faster
 
 #+begin_src emacs-lisp
-;;; readme.org --- annt's GNU Emacs configuration file -*- lexical-binding: t -*-
-
-;;; Commentary:
-
-;; This file contains my personal configuration
+;;; swisschamp.el --- annt's GNU Emacs configuration file -*- lexical-binding: t -*-
 
 ;;; Code:
 #+end_src

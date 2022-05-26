@@ -1,4 +1,4 @@
-;;; early-init.el --- GNU Emacs >= 27.1 pre-initialization file -*- lexical-binding: t -*-
+;;; early-init.el --- GNU Emacs >= 27.1 pre-initialization file-*- lexical-binding: t; no-byte-compile: t; -*-
 
 ;; Copyright (C) 2020-2022 anntnzrb
 
@@ -34,6 +34,12 @@
 ;; <https://www.gnu.org/software/emacs/manual/html_node/emacs/Early-Init-File.html>.
 
 ;;; Code:
+
+;; explicitely set Emacs' directory for this profile
+(setq user-emacs-directory
+      (file-name-as-directory
+       (concat (or (getenv "XDG_CONFIG_HOME") (expand-file-name "~/.config"))
+               "/emacs")))
 
 ;; check if using minimum required version
 (let ((min-ver "28.0"))
