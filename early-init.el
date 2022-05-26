@@ -48,25 +48,26 @@
 (setq read-process-output-max (* 1024 1024))
 
 ;; Native Compilation
-;; REVIEW: future refactor
-(when (and
-       (fboundp 'native-comp-available-p)
-       (native-comp-available-p))
-  (message "Native compilation is available.")
-  (setq native-comp-async-report-warnings-errors 'silent)
-  ;; Prevent unwanted runtime compilation
-  (setq native-comp-deferred-compilation nil))
+(if (and (fboundp 'native-comp-available-p)
+         (native-comp-available-p))
+    (progn
+      (message "Native compilation is available.")
+      (setq native-comp-async-report-warnings-errors 'silent)
+      ;; Prevent unwanted runtime compilation
+      (setq native-comp-deferred-compilation nil))
+  (message "Native compilation is NOT available."))
 
 ;; package tweaks
 (setq package-enable-at-startup nil) ;; needed by `straight.el'
 
 ;; GUI
-(menu-bar-mode   0)
-(tool-bar-mode   0)
-(scroll-bar-mode 0)
-(setq inhibit-splash-screen  t)
-(setq inhibit-startup-screen t)
+(setq inhibit-splash-screen        t)
+(setq inhibit-startup-screen       t)
 (setq frame-inhibit-implied-resize t) ;; don't frame-resize this early
+(eval '(setq inhibit-startup-echo-area-message t))
+(menu-bar-mode   -1)
+(tool-bar-mode   -1)
+(scroll-bar-mode -1)
 
 ;; dialogs; preferably disabled for a totally keyboard-driven experience
 (setq use-dialog-box  nil)

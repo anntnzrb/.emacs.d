@@ -36,6 +36,12 @@
 (defvar annt--emacs-config-file "readme"
   "Base name of annt's configuration file.")
 
+;; explicitely set Emacs' directory for this profile
+(setq user-emacs-directory
+      (file-name-as-directory
+       (concat (or (getenv "XDG_CONFIG_HOME") (expand-file-name "~/.config"))
+               "/emacs")))
+
 (defun annt--notify-and-log (msg)
   "Prints MSG and logs it to a file in `user-emacs-directory' directory."
   (message msg)
