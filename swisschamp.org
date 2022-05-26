@@ -102,6 +102,10 @@ this literate configuration into /ELisp/ code and load it.
 #+begin_src emacs-lisp
 ;;; swisschamp.el --- annt's GNU Emacs configuration file -*- lexical-binding: t -*-
 
+;;; Commentary:
+
+;;; annt's GNU Emacs' configuration (swisschamp).
+
 ;;; Code:
 #+end_src
 
@@ -116,8 +120,8 @@ goes to their contributors as i only partially edited them to fit my needs.
 (defmacro after! (package &rest body)
   "Evaluate BODY after PACKAGE have loaded.
 
-PACKAGE is a symbol or list of them. These are package names, not modes,
-functions or variables. It can be:
+PACKAGE is a symbol or list of them.  These are package names, not modes,
+functions or variables.  It can be:
 
 - An unquoted package symbol (the name of a package)
     (after! helm BODY...)
@@ -197,7 +201,7 @@ a few reasons why i consider =straight.el=:
 
   ;; always prefer native compilation
   (setq straight-disable-compile nil)
-  (setq straight-disable-native-compilation nil))
+  (setq straight-disable-native-compile nil))
 #+end_src
 
 ** helpers
@@ -289,8 +293,9 @@ settings that do not belong anywhere specific.
 (setq visible-bell              t) ;; flash screen
 
 ;; always autorevert (dynamically refresh buffer contents)
-(setq auto-revert-verbose t)
 (add-hook 'after-init-hook #'global-auto-revert-mode)
+(after! autorevert
+  (setq auto-revert-verbose t))
 
 ;; performance improvement for really long files
 (global-so-long-mode)
@@ -367,7 +372,7 @@ however, if set properly this can be a catastrophe saver.
 
 ;; line numbers
 (defun annt--line-numbers-setup ()
-  "Sets up `display-line-numbers' and `display-fill-column-indicator'"
+  "Sets up `display-line-numbers' and `display-fill-column-indicator'."
   (setq display-line-numbers 'relative)
   (setq display-fill-column-indicator-column (+ fill-column 1)))
 
@@ -479,8 +484,9 @@ mouse wheel behaviour:
 
 ;; save cursor position
 (save-place-mode)
-(setq save-place-file (expand-file-name "backups/places" user-emacs-directory))
-(setq save-place-forget-unreadable-files t)
+(after! saveplace
+  (setq save-place-file (expand-file-name "backups/places" user-emacs-directory))
+  (setq save-place-forget-unreadable-files t))
 
 ;; settings for TTY Emacs
 (unless (display-graphic-p)
@@ -526,23 +532,24 @@ under its respective =mode-map=-ing.
 (after-gui!
   (straight-use-package 'modus-themes)
 
-  (setq modus-themes-slanted-constructs t)
-  (setq modus-themes-bold-constructs    t)
+  (after! modus-themes
+    (setq modus-themes-slanted-constructs t)
+    (setq modus-themes-bold-constructs    t)
 
-  ;; modeline
-  (setq modus-themes-subtle-line-numbers t)
+    ;; modeline
+    (setq modus-themes-subtle-line-numbers t)
 
-  ;; org
-  (setq modus-themes-org-blocks 'grayscale)
+    ;; org
+    (setq modus-themes-org-blocks 'grayscale)
 
-  (modus-themes-load-themes)
+    (modus-themes-load-themes)
+
+    (def-key! "M-<f5>" #'modus-themes-toggle))
 
   (let ((time (string-to-number (format-time-string "%H"))))
     (if (and (> time 8) (< time 18))
         (modus-themes-load-operandi)
-      (modus-themes-load-vivendi)))
-
-  (def-key! "M-<f5>" #'modus-themes-toggle))
+      (modus-themes-load-vivendi))))
 
 (unless (display-graphic-p)
   (message "No theme loaded :: Not running from a graphical display."))
@@ -601,9 +608,10 @@ under its respective =mode-map=-ing.
 
 #+begin_src emacs-lisp
 ;; clock
-(setq display-time-format      "%a @ %H:%M")
-(setq display-time-interval              50) ;; update faster to catch up
-(setq display-time-default-load-average nil)
+(after! time
+  (setq display-time-format      "%a @ %H:%M")
+  (setq display-time-interval              50) ;; update faster to catch up
+  (setq display-time-default-load-average nil))
 
 (add-hook 'after-init-hook #'display-time-mode)
 
@@ -734,10 +742,11 @@ set of keyboard binding for programming modes
 (after! prog-mode
   (straight-use-package 'lsp-mode)
 
-  (setq lsp-keymap-prefix          "C-c l")
-  (setq lsp-lens-enable                  t)
-  (setq lsp-modeline-diagnostics-enable  t)
-  (setq lsp-headerline-breadcrumb-enable t))
+  (after! lsp-mode
+    (setq lsp-keymap-prefix          "C-c l")
+    (setq lsp-lens-enable                  t)
+    (setq lsp-modeline-diagnostics-enable  t)
+    (setq lsp-headerline-breadcrumb-enable t)))
 #+end_src
 
 ** shell
@@ -1012,7 +1021,7 @@ in short, the /7 rules/ summarized:
                                              overlong-summary-line)))
 ;; fill-column
 (defun annt--set-git-fill-column ()
-  "Updates the value of fill-column for git commit messages."
+  "Updates the value of `fill-column' for git commit messages."
   (setq-local fill-column 72)
   (setq-local display-fill-column-indicator-column (+ fill-column 1)))
 
@@ -1039,14 +1048,13 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (straight-use-package 'which-key)
 
-;; disable lighter on mode-line
-(setq which-key-lighter                            nil)
-(setq which-key-idle-delay                         0.5)
-(setq which-key-max-display-columns                nil)
-(setq which-key-paging-key                    "<next>")
-(setq which-key-sort-order #'which-key-key-order-alpha)
+(after! which-key
+  (setq which-key-lighter nil) ;; disable lighter on mode-line
+  (setq which-key-paging-key          "<next>")
+  (setq which-key-idle-delay               0.5)
+  (setq which-key-max-display-columns      nil)
+  (setq which-key-sort-order #'which-key-key-order-alpha))
 
-;; init after set-up
 (which-key-mode)
 #+end_src
 
@@ -1170,7 +1178,7 @@ in short, the /7 rules/ summarized:
 (after! company
   (setq company-lighter-base  "Company")
   (setq company-idle-delay          0.3)
-  (setq company-show-numbers          t)
+  (setq company-show-quick-access     t)
   (setq company-minimum-prefix-length 2))
 #+end_src
 
@@ -1334,7 +1342,7 @@ one of /Emacs/' killer features.
 
   (defun annt--org-present-start ()
     "Configurations settings for entering presentation mode."
-    (interactive "P")
+    (interactive)
     ;; save current settings
     (setq-local display-line-numbers-orig display-line-numbers)
 
@@ -1348,7 +1356,7 @@ one of /Emacs/' killer features.
   (defun annt--org-present-end ()
     "Configurations settings for exiting presentation mode, reverting changes
 mostly."
-    (interactive "P")
+    (interactive)
     ;; restore settings
     (setq-local text-scale-mode-amount 0)
     (setq display-line-numbers display-line-numbers-orig)
