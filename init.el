@@ -33,8 +33,12 @@
 
 ;;; Code:
 
-(defvar swisschamp--file "swisschamp"
+(defconst swisschamp--file "swisschamp"
   "Base name of Swisschamp's configuration file.")
+
+;; Add extra paths, 'lisp/' contains core & helper definitions.
+(dolist (path '("lisp"))
+  (add-to-list 'load-path (locate-user-emacs-file path)))
 
 ;; WARNING: Reset garbage collector (should be at the end of this file)
 ;; After everything else is set-up, set the garbage collector to a considerable

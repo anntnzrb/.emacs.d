@@ -3,6 +3,7 @@
 !.gitignore
 !COPYING
 
+!/lisp
 !/snippets
 
 !early-init.el
