@@ -19,7 +19,6 @@
   - [[#initialization-files][initialization files]]
     - [[#early-initel][=early-init.el=]]
     - [[#initel][=init.el=]]
-  - [[#header][header]]
   - [[#preamble][preamble]]
   - [[#package-management][package management]]
     - [[#straightel][~straight.el~]]
@@ -95,7 +94,7 @@ this literate configuration into /ELisp/ code and load it.
 
 #+include: init.el src emacs-lisp :tangle no
 
-** header
+** preamble
 
 =lexical-binding= should make /Emacs/ a tiny bit faster
 
@@ -107,9 +106,8 @@ this literate configuration into /ELisp/ code and load it.
 ;;; annt's GNU Emacs' configuration (swisschamp).
 
 ;;; Code:
+(require 'swisschamp-helper)
 #+end_src
-
-** preamble
 
 the following macro was yoinked from the [[https://github.com/hlissner/doom-emacs][Doom Emacs]]' source code, all credit
 goes to their contributors as i only partially edited them to fit my needs.
@@ -271,7 +269,6 @@ intuitive.
 
 (defalias 'def-key!   #'general-def)
 (defalias 'undef-key! #'general-unbind)
-(defalias 'add-hook!  #'general-add-hook)
 (defalias 'after-gui! #'general-after-gui)
 
 (add-hook 'after-init-hook #'general-auto-unbind-keys)
@@ -370,20 +367,18 @@ however, if set properly this can be a catastrophe saver.
 (setq-default indent-tabs-mode         nil)
 (setq-default fill-column               79)
 
-;; line numbers
-(defun annt--line-numbers-setup ()
-  "Sets up `display-line-numbers' and `display-fill-column-indicator'."
-  (setq display-line-numbers 'relative)
-  (setq display-fill-column-indicator-column (+ fill-column 1)))
-
 ;; trailing withespaces
-(defun annt--trailing-whitespace-setup ()
+(defun-hook! annt--line-numbers-setup ()
+  (prog-mode-hook text-mode-hook)
   "Sets up `show-trailing-whitespace'."
   (setq show-trailing-whitespace t))
 
-(add-hook! '(prog-mode-hook text-mode-hook)
-           (list  #'annt--line-numbers-setup
-                  #'annt--trailing-whitespace-setup))
+;; line numbers
+(defun-hook! annt--line-numbers-setup ()
+  (prog-mode-hook text-mode-hook)
+  "Sets up `display-line-numbers' and `display-fill-column-indicator'."
+  (setq display-line-numbers 'relative)
+  (setq display-fill-column-indicator-column (+ fill-column 1)))
 
 ;; display vertical column at line limit
 (global-display-fill-column-indicator-mode)
@@ -561,14 +556,12 @@ under its respective =mode-map=-ing.
 (after-gui!
   (straight-use-package 'all-the-icons)
 
-  (defun annt--all-the-icons-setup ()
+  (defun-hook! annt--all-the-icons-setup ()
+    after-init-hook
     "Checks if `all-the-icons' fonts are downloaded, gets them if not."
     (unless (file-exists-p (expand-file-name
                             "~/.local/share/fonts/all-the-icons.ttf"))
-      (all-the-icons-install-fonts t)))
-
-  ;; install all-the-icons on boot only if missing
-  (add-hook 'after-init-hook #'annt--all-the-icons-setup))
+      (all-the-icons-install-fonts t))))
 #+end_src
 
 *** dashboard
@@ -597,11 +590,10 @@ under its respective =mode-map=-ing.
     :with #'ignore
     [remap quit-window])
 
-  (defun annt--dashboard-as-initial-buffer ()
+  (defun-hook! annt--dashboard-as-initial-buffer ()
+    dashboard-mode-hook
     "Sets the initial buffer to dashboard."
-    (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*"))))
-
-  (add-hook! 'dashboard-mode-hook #'annt--dashboard-as-initial-buffer))
+    (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))))
 #+end_src
 
 *** modeline
@@ -1017,16 +1009,15 @@ in short, the /7 rules/ summarized:
 
 #+begin_src emacs-lisp
 (after! git-commit
+  (setq git-commit-summary-max-length 50)
   (setq git-commit-style-convention-checks '(non-empty-second-line
                                              overlong-summary-line)))
 ;; fill-column
-(defun annt--set-git-fill-column ()
+(defun-hook! annt--set-git-fill-column ()
+  git-commit-mode-hook
   "Updates the value of `fill-column' for git commit messages."
   (setq-local fill-column 72)
   (setq-local display-fill-column-indicator-column (+ fill-column 1)))
-
-(setq git-commit-summary-max-length 50)
-(add-hook 'git-commit-mode-hook #'annt--set-git-fill-column)
 #+end_src
 
 | [[https://github.com/magit/magit][magit]] | complete text-based user interface to [[https://git-scm.com/][Git]] |
@@ -1340,7 +1331,8 @@ one of /Emacs/' killer features.
 (after! org
   (straight-use-package 'org-tree-slide)
 
-  (defun annt--org-present-start ()
+  (defun-hook! annt--org-present-start ()
+    org-tree-slide-play-hook
     "Configurations settings for entering presentation mode."
     (interactive)
     ;; save current settings
@@ -1353,7 +1345,8 @@ one of /Emacs/' killer features.
     (display-fill-column-indicator-mode 0)
     (text-scale-set text-scale-mode-amount))
 
-  (defun annt--org-present-end ()
+  (defun-hook! annt--org-present-end ()
+    org-tree-slide-stop-hook
     "Configurations settings for exiting presentation mode, reverting changes
 mostly."
     (interactive)
@@ -1368,8 +1361,5 @@ mostly."
   (setq org-image-actual-width nil)
 
   ;; keybinds
-  (def-key! org-mode-map :prefix "C-c" "<f9>" #'org-tree-slide-mode)
-
-  (add-hook 'org-tree-slide-play-hook #'annt--org-present-start)
-  (add-hook 'org-tree-slide-stop-hook   #'annt--org-present-end))
+  (def-key! org-mode-map :prefix "C-c" "<f9>" #'org-tree-slide-mode))
 #+end_src
