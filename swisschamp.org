@@ -261,7 +261,9 @@ to "share" itself across new instances (those being graphical or via terminal).
 
 #+begin_src emacs-lisp
 (require 'server)
-(unless (server-running-p) (add-hook 'after-init-hook #'server-start))
+(unless (or (server-running-p)
+             (daemonp))
+  (add-hook 'after-init-hook #'server-start))
 #+end_src
 
 *** indentification
