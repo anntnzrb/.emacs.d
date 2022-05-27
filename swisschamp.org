@@ -1,6 +1,7 @@
 #+title:    annt's GNU Emacs'
 #+author:   anntnzrb
 #+email:    anntnzrb@proton.me
+#+startup: content indent
 #+property: header-args :results silent
 
 # macros
@@ -1251,6 +1252,9 @@ one of /Emacs/' killer features.
                               odt
                               org
                               texinfo))
+
+  (def-key! org-mode-map
+    "<tab>" #'org-cycle)
 
   (add-hook 'org-mode-hook #'org-indent-mode))
 
