@@ -383,7 +383,7 @@ me not to seek for /Vi/ emulation everywhere.
   (setq evil-collection-want-unimpaired-p nil)
   ;; emtpy the list of available modes and enable individually; no surprises
   (setq evil-collection-mode-list nil)
-  (evil-collection-init '(help)))
+  (evil-collection-init '(help (custom cus-edit))))
 #+end_src
 
 | [[https://github.com/emacs-evil/evil-surround][evil-surround]] | [[https://github.com/tpope/vim-surround][vim-surround]] emulation |
@@ -545,6 +545,8 @@ testing for now...
   (undef-key! dashboard-mode-map
     :with #'ignore
     [remap quit-window])
+
+  (evil-collection-init 'dashboard)
 
   (defun-hook! annt--dashboard-as-initial-buffer ()
     dashboard-mode-hook
@@ -985,7 +987,8 @@ in short, the /7 rules/ summarized:
 
 (after! magit
   ;; vi binds
-  (evil-collection-init 'magit))
+  (evil-collection-init '((magit magit-repos magit-submodule)
+                          magit-section magit-todos)))
 #+end_src
 
 * applications & utilities
