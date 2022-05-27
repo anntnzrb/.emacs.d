@@ -1,4 +1,4 @@
-;;; swisschamp-helper.el --- XXX -*- lexical-binding: t; no-byte-compile: t; -*-
+;;; swisschamp-helper.el --- -*- lexical-binding: t; no-byte-compile: t; -*-
 
 ;; Copyright (C) 2020-2022 anntnzrb
 
@@ -21,7 +21,8 @@
 
 ;;; Commentary:
 
-;;; XXX
+;; This file contains helpers, sugars and wrappers for the sake of verbose
+;; syntax reduction and readability.
 
 ;;; Code:
 
