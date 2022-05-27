@@ -476,31 +476,31 @@ under its respective =mode-map=-ing.
 
 | [[https://gitlab.com/protesilaos/modus-themes/][modus-themes]] | pair of highly accessible themes that conform with the WCAG AAA standard for colour contrast between background and foreground combinations |
 
+seems like these themes work well in Emacs terminal mode, i previously set
+themes to only load if running via graphical Emacs (=display-graphic-p=);
+testing for now...
+
 #+begin_src emacs-lisp
-(after-gui!
-  (straight-use-package 'modus-themes)
+;; load modus-themes; don't enable yet
+(load-theme 'modus-vivendi t t)
 
-  (after! modus-themes
-    (setq modus-themes-slanted-constructs t)
-    (setq modus-themes-bold-constructs    t)
+(after! modus-themes
+  (setq modus-themes-links         '(background italic))
+  (setq modus-themes-region        '(no-extend bg-only accented))
+  (setq modus-themes-syntax        '(green-strings yellow-comments))
+  (setq modus-themes-mode-line     '(accented borderless))
+  (setq modus-themes-org-blocks    'greyscale)
+  (setq modus-themes-paren-match   '(bold underline))
+  (setq modus-themes-lang-checkers 'straight-underline)
+  (setq modus-themes-bold-constructs   t)
+  (setq modus-themes-italic-constructs t)
 
-    ;; modeline
-    (setq modus-themes-subtle-line-numbers t)
-
-    ;; org
-    (setq modus-themes-org-blocks 'grayscale)
-
-    (modus-themes-load-themes)
-
-    (def-key! "M-<f5>" #'modus-themes-toggle))
+  (def-key! "M-<f5>" #'modus-themes-toggle)
 
   (let ((time (string-to-number (format-time-string "%H"))))
     (if (and (> time 8) (< time 18))
         (modus-themes-load-operandi)
       (modus-themes-load-vivendi))))
-
-(unless (display-graphic-p)
-  (message "No theme loaded :: Not running from a graphical display."))
 #+end_src
 
 | [[https://github.com/domtronn/all-the-icons.el][all-the-icons]] | collection of various icon fonts |
