@@ -59,7 +59,7 @@
   - [[#html][HTML]]
 - [[#version-control][version control]]
 - [[#applications--utilities][applications & utilities]]
-  - [[#completion][completion]]
+  - [[#completion--extras][completion & extras]]
     - [[#syntax-checking][syntax checking]]
     - [[#snippets][snippets]]
   - [[#spelling][spelling]]
@@ -1055,7 +1055,7 @@ in short, the /7 rules/ summarized:
   (setq beacon-blink-duration  0.5))
 #+end_src
 
-** completion
+** completion & extras
 
 | Abbreviations (Abbrevs) | built-in library for text abbreviations |
 
@@ -1144,6 +1144,14 @@ in short, the /7 rules/ summarized:
   (setq company-idle-delay          0.3)
   (setq company-show-quick-access     t)
   (setq company-minimum-prefix-length 2))
+#+end_src
+
+| [[https://github.com/oantolin/embark][embark]] | perform actions on targets |
+
+#+begin_src emacs-lisp
+(straight-use-package 'embark)
+
+(def-key! "C-<escape>" #'embark-act)
 #+end_src
 
 *** syntax checking
