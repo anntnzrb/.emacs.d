@@ -1093,17 +1093,28 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (straight-use-package 'orderless)
 
-(setq completion-styles '(orderless))
+(after! orderless
+  (setq orderless-matching-styles '(orderless-regexp orderless-literal)))
+
+(after! minibuffer
+  (setq completion-styles '(orderless))
+
+  ;; don't let SPC complete; '?' is for REGEXPs
+  (undef-key! minibuffer-local-completion-map "SPC" "?"))
 #+end_src
 
 | [[https://github.com/minad/vertico][vertico]] | minimalistic completion UI, uses /Emacs/' own completion engine in contrast to other tools like [[https://github.com/abo-abo/swiper][ivy]] and [[https://github.com/emacs-helm/helm][helm]] |
 
 #+begin_src emacs-lisp
 (straight-use-package 'vertico)
-
 (vertico-mode)
 
 (after! vertico
+  (setq vertico-count 10)
+  (setq vertico-resize nil)
+  (setq vertico-scroll-margin (/ vertico-count 2))
+  (setq vertico-sort-function 'vertico-sort-history-length-alpha)
+
   (def-key! vertico-map
     "C-j" #'vertico-next
     "C-k" #'vertico-previous))
@@ -1112,10 +1123,13 @@ in short, the /7 rules/ summarized:
 | [[https://github.com/minad/marginalia][marginalia]] | annotations in the minibuffer |
 
 #+begin_src emacs-lisp
-(after! vertico
-  (straight-use-package 'marginalia)
+(straight-use-package 'marginalia)
+(marginalia-mode)
 
-  (marginalia-mode))
+(after! marginalia
+  (setq marginalia-align    'left)
+  (setq marginalia-separator  nil)
+  (setq marginalia-field-width 80))
 #+end_src
 
 | [[https://github.com/company-mode/company-mode][company]] | text completion completion framework |
