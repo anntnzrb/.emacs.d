@@ -357,9 +357,18 @@ me not to seek for /Vi/ emulation everywhere.
 #+begin_src emacs-lisp
 (straight-use-package 'evil)
 
-(setq evil-want-keybinding nil)
-(setq evil-undo-system     'undo-redo)
+;; the following 2 need to be set before loading `evil'
+(setq evil-want-keybinding    nil)
+(setq evil-undo-system 'undo-redo) ;; EmacsV28+
+(evil-mode) ;; evil is used everywhere
 
+(after! evil
+  (def-key! evil-insert-state-map "C-g" #'evil-normal-state))
+#+end_src
+
+the following are mass unbinds from annoying defaults Evil ships with:
+
+#+begin_src emacs-lisp
 (after! evil
   (undef-key! '(evil-insert-state-map
                 evil-normal-state-map
@@ -368,10 +377,8 @@ me not to seek for /Vi/ emulation everywhere.
     :with #'ignore
     [mouse-2])
 
-  (def-key! evil-motion-state-map [down-mouse-1] #'ignore)
-  (def-key! evil-insert-state-map "C-g"          #'evil-normal-state))
-
-(evil-mode) ;; evil is used everywhere
+  (undef-key! evil-motion-state-map [down-mouse-1])
+  (undef-key! '(evil-insert-state-map evil-motion-state-map) "C-z"))
 #+end_src
 
 | [[https://github.com/emacs-evil/evil-collection][evil-collection]] | collection of /Vi/ keybinds for some parts of /Emacs/ which are dealt incorrectly by evil |
@@ -384,6 +391,12 @@ me not to seek for /Vi/ emulation everywhere.
   ;; emtpy the list of available modes and enable individually; no surprises
   (setq evil-collection-mode-list nil)
   (evil-collection-init '(help (custom cus-edit))))
+
+(defun annt--evil-collection-init (modes)
+  "Wrapper around `evil-collection-init' which calls mentioned function only
+after `evil' has been loaded first.
+Argument MODES behaves the same."
+  (after! evil (evil-collection-init modes)))
 #+end_src
 
 | [[https://github.com/emacs-evil/evil-surround][evil-surround]] | [[https://github.com/tpope/vim-surround][vim-surround]] emulation |
@@ -452,9 +465,12 @@ under its respective =mode-map=-ing.
 #+begin_src emacs-lisp
 ;; some defaults i dislike from the global map
 (undef-key!
-  :with #'ignore
   "C-SPC"
   "C-@"
+  "C-z")
+
+(undef-key!
+  :with #'ignore
   [mouse-2]
   [mouse-3])
 #+end_src
@@ -546,7 +562,7 @@ testing for now...
     :with #'ignore
     [remap quit-window])
 
-  (evil-collection-init 'dashboard)
+  (annt--evil-collection-init 'dashboard)
 
   (defun-hook! annt--dashboard-as-initial-buffer ()
     dashboard-mode-hook
@@ -638,7 +654,7 @@ notice.
     [mouse-3] #'dired-mouse-find-file
     [mouse-8] #'dired-up-directory)
 
-  (evil-collection-init 'dired) ;; vi binds
+  (annt--evil-collection-init 'dired) ;; vi binds
 
   ;; less verbose output
   (add-hook 'dired-mode-hook #'dired-hide-details-mode))
@@ -987,7 +1003,7 @@ in short, the /7 rules/ summarized:
 
 (after! magit
   ;; vi binds
-  (evil-collection-init '((magit magit-repos magit-submodule)
+  (annt--evil-collection-init '((magit magit-repos magit-submodule)
                           magit-section magit-todos)))
 #+end_src
 
@@ -1022,7 +1038,7 @@ in short, the /7 rules/ summarized:
 
 (after! helpful
   ;; vi binds
-  (evil-collection-init 'helpful))
+  (annt--evil-collection-init 'helpful))
 #+end_src
 
 | [[https://github.com/tarsius/hl-todo][hl-todo]] | TODO/FIXME/etc keyword highlighting in comments and strings |
