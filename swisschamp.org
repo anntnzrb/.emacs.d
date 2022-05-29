@@ -1378,6 +1378,21 @@ mostly."
 
 *** LaTeX
 
+/Org/ allows writing /LaTeX/ expressions as well as exporting files, this
+means, it is possible to export an /Org/ file to /PDF/ for example, this is
+done via /LaTeX-pandoc/ as middle-men.  this was just a tiny example, there are
+many options for exporting, usually exporting to /PDF/ is a common task.
+
+in order to compile /LaTeX/ files via /Org/, a distribution for the [[https://en.wikipedia.org/wiki/TeX][TeX]]
+typesetting is required.  /TeX Live/ is a free distribution which includes the
+pertinent /TeX/ toolset to compile a /LaTeX/ file; you may find great
+documentation and overview about it at the [[https://wiki.archlinux.org/title/TeX_Live][Arch Wiki (TeX Live)]].
+
+[[https://pandoc.org/][Pandoc]] is a universal document converter which interoperates with the /Tex
+Live/ toolset to produced the desired LaTeX file.  attempting to compile an Org
+file using /LaTeX/ without the previously mentioned tools will result in
+errors.
+
 #+begin_src emacs-lisp
 (after! (org ox-latex)
   (setq org-latex-classes
