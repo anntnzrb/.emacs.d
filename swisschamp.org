@@ -66,6 +66,8 @@
     - [[#flyspell][FlySpell]]
   - [[#bookmarks][bookmarks]]
   - [[#org][org]]
+    - [[#latex][LaTeX]]
+    -  [[#setup-files][setup files]]
 
 * core settings
 
@@ -1362,4 +1364,42 @@ mostly."
 
   ;; keybinds
   (def-key! org-mode-map :prefix "C-c" "<f9>" #'org-tree-slide-mode))
+#+end_src
+
+*** LaTeX
+
+#+begin_src emacs-lisp
+(after! (org ox-latex)
+  (setq org-latex-classes
+        '(("article"
+           "\\documentclass{article} [NO-DEFAULT-PACKAGES] [PACKAGES] [EXTRA]"
+           ("\\section{%s}"       . "\\section*{%s}")
+           ("\\subsection{%s}"    . "\\subsection*{%s}")
+           ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+           ("\\paragraph{%s}"     . "\\paragraph*{%s}")
+           ("\\subparagraph{%s}"  . "\\subparagraph*{%s}"))))
+  (setq org-latex-compiler "xelatex"))
+#+end_src
+
+***  setup files
+
+these are the setup files to be included in /Org/ files, they could be included
+at the top of every file, but for the sake of reducing file verbosity they're
+kept alone and they included at will.  this also makes it easier maintain
+different styles/configurations.
+
+#+begin_src org :mkdirp yes :tangle "org/latex/latex-apa.org"
+# APA style LaTeX <https://apastyle.apa.org/style-grammar-guidelines>
+
+# Org
+#+options: toc: 2
+
+# LaTeX
+#+latex_class_options: [12pt, letter]
+#+latex_header:        \usepackage[doublespacing]{setspace}
+#+latex_header:        \usepackage[portrait, margin=1in]{geometry}
+# ** font
+# check for 'Times' variants
+#+latex_header: \usepackage{fontspec}
+#+latex_header: \setmainfont{Times Newer Roman}
 #+end_src
