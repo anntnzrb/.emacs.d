@@ -80,7 +80,7 @@ but are kept here for editing purposes.
 
 /GNU Emacs/ =27.1= offers new file called =early-init.el= which allows
 customizations that take effect during Emacs startup earlier than the normal
-init file. This file is loaded before the package system and GUI is
+init file.  This file is loaded before the package system and GUI is
 initialized.
 
 references:
@@ -91,7 +91,7 @@ references:
 *** =init.el=
 
 this file is responsible of loading the necessary /ELisp/ code whenever
-/GNU Emacs/ starts. my configuration is (obviously) written literally using
+/GNU Emacs/ starts.  my configuration is (obviously) written literally using
 /Org/ so the purpose of this file is to contain the instructions to transform
 this literate configuration into /ELisp/ code and load it.
 
@@ -164,10 +164,10 @@ a few reasons why i consider =straight.el=:
 
 *NOTE*: the following package drastically impacts the commonly used syntax for
 defining keys/advices/hooks; as stated, these are macros and wrappers around
-the "proper" way of defining those mentioned before. it is adviced to have a
+the "proper" way of defining those mentioned before.  it is adviced to have a
 clear understanding of core commands such as =define-key=, =global-set-key=,
-etc.  before proceeding to replace them with =package.el=.
-please do read at least the =README= file on the package's repository.
+etc.  before proceeding to replace them with =package.el=.  please do read at
+least the =README= file on the package's repository.
 
 the ultimate goal with this package is to avoid the following:
 
@@ -285,7 +285,7 @@ to use another file and accomplish this.
 
 #+begin_quote
 i've finally decided to just not use a custom file at all; everything should be
-handled from this file anyways. i've had issues with my settings whenever i'm
+handled from this file anyways.  i've had issues with my settings whenever i'm
 going thru =customize= and accidentally set-up a settings or two.
 #+end_quote
 
@@ -707,7 +707,7 @@ set of keyboard binding for programming modes
     [remap aggressive-indent-indent-defun] #'aggressive-indent-indent-region-and-on))
 #+end_src
 
-| [[https://github.com/emacs-lsp/lsp-mode/][lsp-mode]] | Emacs client/library for the /Language Server Protocol (LSP)/. |
+| [[https://github.com/emacs-lsp/lsp-mode/][lsp-mode]] | Emacs client/library for the /Language Server Protocol (LSP)/ |
 
 #+begin_src emacs-lisp
 (after! prog-mode
@@ -1213,7 +1213,7 @@ in short, the /7 rules/ summarized:
 ** spelling
 
 very basic spell-checking system for now, as i find somewhat quite difficult to
-manage multiple dictionaries. also still studying the different backend
+manage multiple dictionaries.  also still studying the different backend
 alternatives, those being =aspell=, =hunspell= & =enchant=.
 
 #+begin_src emacs-lisp
