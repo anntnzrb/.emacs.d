@@ -365,6 +365,7 @@ me not to seek for /Vi/ emulation everywhere.
 (evil-mode) ;; evil is used everywhere
 
 (after! evil
+  (def-key! "C-M-<escape>" #'evil-local-mode)
   (def-key! evil-insert-state-map "C-g" #'evil-normal-state))
 #+end_src
 
@@ -391,8 +392,10 @@ the following are mass unbinds from annoying defaults Evil ships with:
 
   (setq evil-collection-want-unimpaired-p nil)
   ;; emtpy the list of available modes and enable individually; no surprises
+  ;; the list of modes may be found here:
+  ;; <https://github.com/emacs-evil/evil-collection/blob/master/evil-collection.el>
   (setq evil-collection-mode-list nil)
-  (evil-collection-init '(help (custom cus-edit))))
+  (evil-collection-init '(info help (custom cus-edit))))
 
 (defun annt--evil-collection-init (modes)
   "Wrapper around `evil-collection-init' which calls mentioned function only
