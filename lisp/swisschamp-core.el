@@ -28,8 +28,8 @@
 ;;; Code:
 
 ;; The following `after!' macro allows deferring (lazy loading) packages, just
-;; like the ':defer' keyword used in 'use-package'.
-;; This was take from Doom Emacs' core.
+;; like the ':defer' keyword in `use-package'.
+;; This was taken from Doom Emacs' core.
 ;; <https://github.com/doomemacs/doomemacs/blob/1b8f46c7c5893d63e4bcebc203c0d28df9f5981b/core/core-lib.el#L506-L549>
 (defmacro after! (package &rest body)
   "Evaluate BODY after PACKAGE have loaded.

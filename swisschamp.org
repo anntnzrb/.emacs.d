@@ -325,7 +325,7 @@ however, if set properly this can be a catastrophe saver.
 (setq-default indent-tabs-mode         nil)
 (setq-default fill-column               79)
 
-;; trailing withespaces
+;; trailing whitespaces
 (defun-hook! annt--line-numbers-setup ()
   (prog-mode-hook text-mode-hook)
   "Sets up `show-trailing-whitespace'."

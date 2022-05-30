@@ -136,7 +136,7 @@ This step should be done after tangling & byte-compiling."
 (setq frame-title-format
       (format "%%b - GNU Emacs [%s] @ %s" window-system (system-name)))
 
-;; set working directory to `~' regardless of where Emacs was started from
+;; set working directory to '~/' regardless of where Emacs was started from
 (cd (expand-file-name "~/"))
 
 (add-hook 'emacs-startup-hook #'swisschamp--init-setup-gc)

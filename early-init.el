@@ -60,7 +60,7 @@
 (setq read-process-output-max (* 1024 1024))
 
 ;; Native Compilation
-;; > Emacs v28
+;; > EmacsV28+
 (if (and (fboundp 'native-comp-available-p)
          (native-comp-available-p))
     (progn
