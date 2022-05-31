@@ -59,6 +59,8 @@
   - [[#web][Web]]
     - [[#html][HTML]]
     - [[#css][CSS]]
+  - [[#assembly][Assembly]]
+    - [[#mips][MIPS]]
 - [[#version-control][version control]]
 - [[#applications--utilities][applications & utilities]]
   - [[#completion--extras][completion & extras]]
@@ -981,6 +983,23 @@ shared settings for Lisp-like languages.
 (after! css-mode
   ;; LSP
   (add-hook 'css-mode-hook #'lsp-deferred))
+#+end_src
+
+** Assembly
+
+*** MIPS
+
+| [[https://github.com/hlissner/emacs-mips-mode][mips-mode]] | a major mode for [[https://en.wikipedia.org/wiki/MIPS_architecture][MIPS Assembly]] |
+
+#+begin_src emacs-lisp
+(defun annt--mips-mode-setup ()
+  "Sets up mode for MIPS Assembly."
+  (interactive)
+  (straight-use-package 'mips-mode)
+
+  (mips-mode))
+
+(add-to-list 'auto-mode-alist '("\\.mips$" . annt--mips-mode-setup))
 #+end_src
 
 * version control
