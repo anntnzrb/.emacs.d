@@ -56,7 +56,9 @@
   - [[#haskell][Haskell]]
   - [[#lua][Lua]]
   - [[#yaml][YAML]]
-  - [[#html][HTML]]
+  - [[#web][Web]]
+    - [[#html][HTML]]
+    - [[#css][CSS]]
 - [[#version-control][version control]]
 - [[#applications--utilities][applications & utilities]]
   - [[#completion--extras][completion & extras]]
@@ -956,17 +958,32 @@ shared settings for Lisp-like languages.
 (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . annt--yaml-mode-setup))
 #+end_src
 
-** HTML
+** Web
+
+#+begin_src shell
+(unless (executable-find "npm")
+ (message
+  "npm is not installed (or found), it may needed for extra functionality"))
+#+end_src
+
+*** HTML
 
 #+begin_src emacs-lisp
-(unless (executable-find "npm")
-  (message "HTML :: npm not installed, cannot install LSP"))
-
-(after! sgml-mode
+(after! html-mode
   (add-hook! 'sgml-mode-hook (list #'sgml-electric-tag-pair-mode
                                    #'aggressive-indent-mode))
   ;; LSP
   (add-hook 'sgml-mode-hook #'lsp-deferred))
+#+end_src
+
+*** CSS
+
+#+begin_src emacs-lisp
+(after! css-mode
+  (add-hook 'css-mode-hook #'aggressive-indent-mode)
+
+  ;; LSP
+  (add-hook 'css-mode-hook #'lsp-deferred))
 #+end_src
 
 * version control
