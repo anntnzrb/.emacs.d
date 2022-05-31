@@ -703,10 +703,12 @@ set of keyboard binding for programming modes
 
 (after! aggressive-indent
   (setq aggressive-indent-comments-too   t)
-  (setq aggressive-indent-sit-for-time 0.5)
+  (setq aggressive-indent-sit-for-time 0.25)
 
   (def-key! aggressive-indent-mode-map
-    [remap aggressive-indent-indent-defun] #'aggressive-indent-indent-region-and-on))
+    "C-c C-q" #'aggressive-indent-indent-region-and-on))
+
+(add-hook 'prog-mode-hook #'aggressive-indent-mode)
 #+end_src
 
 | [[https://github.com/emacs-lsp/lsp-mode/][lsp-mode]] | Emacs client/library for the /Language Server Protocol (LSP)/ |
@@ -810,9 +812,9 @@ settings and style for the /C/ language.
 shared settings for Lisp-like languages.
 
 #+begin_src emacs-lisp
-(after! lisp-mode
-  ;; always aggressive on Lisps
-  (add-hook! '(lisp-mode-hook lisp-data-mode-hook) #'aggressive-indent-mode))
+(after! lisp-data-mode
+  ;; always be aggressive on Lisps
+  (add-hook 'lisp-data-mode-hook #'aggressive-indent-mode))
 #+end_src
 
 *** Emacs Lisp (Elisp)
@@ -883,8 +885,7 @@ shared settings for Lisp-like languages.
     (straight-use-package 'nix-mode)
 
     (after! nix-mode
-      (add-hook! 'nix-mode-hook (list #'lsp-deferred
-                                      #'aggressive-indent-mode)))
+      (add-hook 'nix-mode-hook #'lsp-deferred))
     (nix-mode)))
 
 (add-to-list 'auto-mode-alist '("\\.nix\\'" . annt--nix-mode-setup))
@@ -933,8 +934,7 @@ shared settings for Lisp-like languages.
   (after! lua-mode
     (setq lua-indent-level 2)
 
-    (add-hook! 'lua-mode-hook (list #'lsp-deferred
-                                    #'aggressive-indent-mode)))
+    (add-hook 'lua-mode-hook #'lsp-deferred))
   (lua-mode))
 
 (add-to-list 'auto-mode-alist '("\\.lua\\'" . annt--lua-mode-setup))
@@ -970,8 +970,7 @@ shared settings for Lisp-like languages.
 
 #+begin_src emacs-lisp
 (after! html-mode
-  (add-hook! 'sgml-mode-hook (list #'sgml-electric-tag-pair-mode
-                                   #'aggressive-indent-mode))
+  (add-hook 'sgml-mode-hook #'sgml-electric-tag-pair-mode)
   ;; LSP
   (add-hook 'sgml-mode-hook #'lsp-deferred))
 #+end_src
@@ -980,8 +979,6 @@ shared settings for Lisp-like languages.
 
 #+begin_src emacs-lisp
 (after! css-mode
-  (add-hook 'css-mode-hook #'aggressive-indent-mode)
-
   ;; LSP
   (add-hook 'css-mode-hook #'lsp-deferred))
 #+end_src
