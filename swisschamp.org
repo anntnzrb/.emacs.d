@@ -41,9 +41,7 @@
     - [[#tooltips][tooltips]]
 - [[#dired][dired]]
 - [[#programming][programming]]
-  - [[#keybinds][keybinds]]
-  - [[#tools][tools]]
-  - [[#shell][shell]]
+  - [[#shell][Shell]]
   - [[#makefile][Makefile]]
   - [[#c-like][C-like]]
     - [[#c][C]]
@@ -684,49 +682,37 @@ only enable /dired/ icons when using graphical /Emacs/.
 
 * programming
 
-** keybinds
 
-set of keyboard binding for programming modes
-
-#+begin_src emacs-lisp
-(after! prog-mode
-  (def-key! prog-mode-map
-    :prefix "C-c"
-    "c" #'compile
-    "r" #'recompile))
-#+end_src
-
-** tools
+section dedicated to programming & programming languages specifically.
 
 | [[https://github.com/Malabarba/aggressive-indent-mode][aggressive-indent-mode]] | keeps your code nicely aligned when all you do is type |
 
 #+begin_src emacs-lisp
-(straight-use-package 'aggressive-indent)
+(after! prog-mode
+  (straight-use-package 'aggressive-indent)
+  (add-hook 'prog-mode-hook #'aggressive-indent-mode))
 
 (after! aggressive-indent
-  (setq aggressive-indent-comments-too   t)
+  (setq aggressive-indent-comments-too    t)
   (setq aggressive-indent-sit-for-time 0.25)
 
   (def-key! aggressive-indent-mode-map
     "C-c C-q" #'aggressive-indent-indent-region-and-on))
-
-(add-hook 'prog-mode-hook #'aggressive-indent-mode)
 #+end_src
 
 | [[https://github.com/emacs-lsp/lsp-mode/][lsp-mode]] | Emacs client/library for the /Language Server Protocol (LSP)/ |
 
 #+begin_src emacs-lisp
-(after! prog-mode
-  (straight-use-package 'lsp-mode)
+(after! prog-mode (straight-use-package 'lsp-mode))
 
-  (after! lsp-mode
-    (setq lsp-keymap-prefix          "C-c l")
-    (setq lsp-lens-enable                  t)
-    (setq lsp-modeline-diagnostics-enable  t)
-    (setq lsp-headerline-breadcrumb-enable t)))
+(after! lsp-mode
+  (setq lsp-keymap-prefix          "C-c l")
+  (setq lsp-lens-enable                  t)
+  (setq lsp-modeline-diagnostics-enable  t)
+  (setq lsp-headerline-breadcrumb-enable t))
 #+end_src
 
-** shell
+** Shell
 
 settings for shell scripts.
 
@@ -761,7 +747,7 @@ settings for shell scripts.
 
 ** C-like
 
-languages that are syntactically similar to /C/
+programming languages that are syntactically similar to /C/.
 
 *** C
 
@@ -811,7 +797,7 @@ settings and style for the /C/ language.
 
 ** Lisp-like
 
-shared settings for Lisp-like languages.
+shared settings for Lisp-like programming languages.
 
 #+begin_src emacs-lisp
 (after! lisp-data-mode
@@ -849,9 +835,8 @@ shared settings for Lisp-like languages.
 
 #+begin_src emacs-lisp
 (defun annt--racket-mode-setup ()
-  (interactive)
-
   "Sets up mode for Racket."
+  (interactive)
   (when (executable-find "racket")
     (straight-use-package 'racket-mode)
 
@@ -868,7 +853,6 @@ shared settings for Lisp-like languages.
 (defun annt--fennel-mode-setup ()
   "Sets up mode for Fennel."
   (interactive)
-
   (when (executable-find "lua")
     (straight-use-package 'fennel-mode)
     (fennel-mode)))
@@ -880,9 +864,8 @@ shared settings for Lisp-like languages.
 
 #+begin_src emacs-lisp
 (defun annt--nix-mode-setup ()
-  (interactive)
-
   "Sets up mode for Nix."
+  (interactive)
   (when (executable-find "nix")
     (straight-use-package 'nix-mode)
 
@@ -899,7 +882,6 @@ shared settings for Lisp-like languages.
 (defun annt--haskell-mode-setup ()
   "Sets up mode for Haskell."
   (interactive)
-
   (when (executable-find "ghc")
     (straight-use-package 'haskell-mode)
 
@@ -930,12 +912,10 @@ shared settings for Lisp-like languages.
 (defun annt--lua-mode-setup ()
   "Sets up mode for Lua."
   (interactive)
-
   (straight-use-package 'lua-mode)
 
   (after! lua-mode
     (setq lua-indent-level 2)
-
     (add-hook 'lua-mode-hook #'lsp-deferred))
   (lua-mode))
 
@@ -950,7 +930,6 @@ shared settings for Lisp-like languages.
 (defun annt--yaml-mode-setup ()
   "Sets up mode for YAML."
   (interactive)
-
   (straight-use-package 'yaml-mode)
 
   (after! yaml-mode
@@ -965,7 +944,7 @@ shared settings for Lisp-like languages.
 #+begin_src shell
 (unless (executable-find "npm")
  (message
-  "npm is not installed (or found), it may needed for extra functionality"))
+  "npm is not installed (or not found), it may needed for extra functionality"))
 #+end_src
 
 *** HTML
