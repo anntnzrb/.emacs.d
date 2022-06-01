@@ -74,5 +74,9 @@ This is a wrapper around `eval-after-load' that:
                (setq body `((after! ,next ,@body)))))
             (`(after! (:and ,@package) ,@body))))))
 
+(defmacro featurep! (feature &rest body)
+  "Eval BODY if FEATURE is present."
+  `(if (featurep ,feature) (progn ,@body)))
+
 (provide 'swisschamp-core)
 ;;; swisschamp-core.el ends here
