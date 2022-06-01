@@ -25,6 +25,7 @@
     - [[#straightel][~straight.el~]]
   - [[#helpers][helpers]]
   - [[#generals][generals]]
+    - [[#windows-and-tabs][windows and tabs]]
     - [[#emacs-server][Emacs server]]
     - [[#indentification][indentification]]
     - [[#custom-custom-file][custom custom file]]
@@ -254,6 +255,58 @@ settings that do not belong anywhere specific.
 
 ;; performance improvement for really long files
 (global-so-long-mode)
+#+end_src
+
+*** windows and tabs
+
+rules for window placement can be dictated via the =display-buffer-alist=
+variable; for example, not spawning a window at all after the conclusion of a
+=async-shell-command=.
+
+#+begin_src emacs-lisp
+(after! window
+  (setq display-buffer-alist
+        `(
+          ;; no windows at all
+          ("\\`\\*Async shell command\\*\\'"
+           (display-buffer-no-window)))))
+#+end_src
+
+/David Wilson/'s tutorial on how to
+[[https://www.youtube.com/watch?v=C7ZlNRbWdVI][Organize Your Windows with the Tab Bar in Emacs 27]]
+helped me settling myself in Emacs, i don't know why there isn't much content
+related to /Emacs/ and tabs (as of this writing); wish i found this sooner...
+
+currently the best scenario for tabs i've found is the ability to simulate
+"workflows" (similar to window managers) inside /Emacs/ while preserving the
+window splits/layout on each tab.  i previously struggled running a shell
+inside Emacs while constantly having to switch buffers to edit a file; now it's
+as simple as defining a new tab which holds the various shell i need for the
+task at hand and all the file editing happens on the other(s) tab(s).
+
+#+begin_src emacs-lisp
+(defun-hook! annt--tab-bar-setup ()
+  emacs-startup-hook
+  "Sets up `tab-bar-mode' right after Emacs starts."
+  (setq tab-bar-show 1) ;; only show tabs starting from 2+
+  (setq tab-bar-position                    nil)
+  (setq tab-bar-tab-hints                   nil)
+  (setq tab-bar-new-tab-to           'rightmost)
+  (setq tab-bar-close-tab-select        'recent)
+  (setq tab-bar-close-button-show     'selected)
+  (setq tab-bar-select-tab-modifiers '(control))
+  (setq tab-bar-close-last-tab-choice       nil)
+
+  ;; open a new tab at '~/' with `dired'
+  ;; if `dashboard' is present, prefer it
+  (setq tab-bar-new-tab-choice
+        (if (featurep 'dashboard) "*dashboard*" "~/"))
+
+  ;; enable tabs
+  (tab-bar-mode)
+
+  ;; enable tab history for undo/redo functionality
+  (tab-bar-history-mode))
 #+end_src
 
 *** Emacs server
