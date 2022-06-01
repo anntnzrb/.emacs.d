@@ -576,8 +576,10 @@ testing for now...
 
   (def-key! "M-<f5>" #'modus-themes-toggle)
 
+  ;; if running via GUI, prefer light or dark theme depending on daytime
+  ;; else (terminal) prefer dark mode
   (let ((time (string-to-number (format-time-string "%H"))))
-    (if (and (> time 8) (< time 18))
+    (if (and (display-graphic-p) (and (> time 9) (< time 18)))
         (modus-themes-load-operandi)
       (modus-themes-load-vivendi))))
 #+end_src
