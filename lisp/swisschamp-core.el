@@ -76,7 +76,7 @@ This is a wrapper around `eval-after-load' that:
 
 (defmacro featurep! (feature &rest body)
   "Eval BODY if FEATURE is present."
-  `(if (featurep ,feature) (progn ,@body)))
+  `(when (featurep ,feature) ,@body))
 
 (provide 'swisschamp-core)
 ;;; swisschamp-core.el ends here
