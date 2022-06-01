@@ -936,24 +936,17 @@ shared settings for Lisp-like programming languages.
 (defun annt--haskell-mode-setup ()
   "Sets up mode for Haskell."
   (interactive)
-  (when (executable-find "ghc")
-    (straight-use-package 'haskell-mode)
+  ;; packages
+  (straight-use-package 'haskell-mode)
+  (straight-use-package 'hindent)
+  ;; LSP for Haskell's modes
+  ;; `lsp-haskell' is needed as an extra to `lsp-mode'
+  (straight-use-package 'lsp-haskell)
+  (add-hook! '(haskell-mode-hook haskell-literate-mode-hook) #'lsp-deferred)
 
-    (after! (haskell-mode lsp-mode)
-      (straight-use-package 'hindent)
-
-      ;; Flycheck
-      (add-hook 'haskell-mode-hook #'flycheck-mode)
-
-      ;; LSP for Haskell's modes
-      ;; `lsp-haskell' is needed as an extra to `lsp-mode'
-      (straight-use-package 'lsp-haskell)
-
-      (add-hook! '(haskell-mode-hook haskell-literate-mode-hook) #'lsp-deferred)
-
-      ;; format before saving
-      (add-hook 'before-save-hook #'hindent-reformat-buffer))
-    (haskell-mode)))
+  ;; format before saving
+  (add-hook 'before-save-hook #'hindent-reformat-buffer)
+  (haskell-mode))
 
 (add-to-list 'auto-mode-alist '("\\.hs\\'" . annt--haskell-mode-setup))
 #+end_src
