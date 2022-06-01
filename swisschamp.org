@@ -328,7 +328,7 @@ however, if set properly this can be a catastrophe saver.
 (setq-default fill-column               79)
 
 ;; trailing whitespaces
-(defun-hook! annt--line-numbers-setup ()
+(defun-hook! annt--show-trailing-whitespace-setup ()
   (prog-mode-hook text-mode-hook)
   "Sets up `show-trailing-whitespace'."
   (setq show-trailing-whitespace t))
