@@ -298,7 +298,7 @@ buffers.
 #+end_src
 
 /David Wilson/'s tutorial on how to
-[[https://www.youtube.com/watch?v=C7ZlNRbWdVI][Organize Your Windows with the Tab Bar in Emacs 27]]
+[[https://youtu.be/C7ZlNRbWdVI][Organize Your Windows with the Tab Bar in Emacs 27]]
 helped me settling myself in Emacs, i don't know why there isn't much content
 related to /Emacs/ and tabs (as of this writing); wish i found this sooner...
 
