@@ -25,7 +25,7 @@
     - [[#straightel][~straight.el~]]
   - [[#helpers][helpers]]
   - [[#generals][generals]]
-    - [[#windows-and-tabs][windows and tabs]]
+    - [[#windows-buffers-and-tabs][windows, buffers and tabs]]
     - [[#emacs-server][Emacs server]]
     - [[#indentification][indentification]]
     - [[#custom-custom-file][custom custom file]]
@@ -257,7 +257,7 @@ settings that do not belong anywhere specific.
 (global-so-long-mode)
 #+end_src
 
-*** windows and tabs
+*** windows, buffers and tabs
 
 rules for window placement can be dictated via the =display-buffer-alist=
 variable; for example, not spawning a window at all after the conclusion of a
@@ -270,6 +270,31 @@ variable; for example, not spawning a window at all after the conclusion of a
           ;; no windows at all
           ("\\`\\*Async shell command\\*\\'"
            (display-buffer-no-window)))))
+#+end_src
+
+=ibuffer= is a built-in package which can replace the traditional
+=list-buffers= (=C-x C-b=) command because there is so much it can do in
+comparison to the latter.
+
+/Protesilaos/ performs [[https://youtu.be/6KN_oSLFf-k][a great introduction]] to =ibuffer=, i really don't
+exploit all its features as the basics suffice my needs; the =ibuffer-filter-*=
+set of commands can really enhance one's workflow when working with multiple
+buffers.
+
+#+begin_src emacs-lisp
+;; remap traditional `list-buffers'
+(setq ibuffer-expert                      t)
+(setq ibuffer-view-ibuffer              nil)
+(setq ibuffer-case-fold-search            t)
+(setq ibuffer-use-other-window          nil)
+(setq ibuffer-default-sorting-mode 'recency)
+(setq ibuffer-always-compile-formats      t)
+(setq ibuffer-show-empty-filter-groups  nil)
+(setq ibuffer-default-sorting-reversep  nil)
+
+(after! ibuffer (annt--evil-collection-init 'ibuffer))
+
+(def-key! [remap list-buffers] #'ibuffer)
 #+end_src
 
 /David Wilson/'s tutorial on how to
