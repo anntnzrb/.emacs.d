@@ -58,6 +58,7 @@
   - [[#web][Web]]
     - [[#html][HTML]]
     - [[#css][CSS]]
+    - [[#markdown][Markdown]]
   - [[#assembly][Assembly]]
     - [[#mips][MIPS]]
 - [[#version-control][version control]]
@@ -1034,6 +1035,42 @@ shared settings for Lisp-like programming languages.
 (after! css-mode
   ;; LSP
   (add-hook 'css-mode-hook #'lsp-deferred))
+#+end_src
+
+*** Markdown
+
+| [[https://github.com/jrblevin/markdown-mode][markdown-mode]] | major mode for editing Markdown files |
+| [[https://github.com/ardumont/markdown-toc][markdown-toc]]  | TOC generator for Markdown files      |
+
+#+begin_src emacs-lisp
+(straight-use-package 'markdown-mode)
+
+(after! markdown-mode
+  ;; disabled to prevent changing other's file
+  (setq markdown-indent-on-enter nil)
+  (setq markdown-footnote-location 'header) ;; TODO :: test
+  (setq markdown-enable-html        t)
+  (setq markdown-enable-math        t)
+  (setq markdown-table-align-p      t)
+  (setq markdown-mouse-follow-link  t)
+  (setq markdown-list-indent-width  4)
+  (setq markdown-export-kill-buffer t)
+  (setq markdown-disable-tooltip-prompt nil)
+  (setq markdown-gfm-use-electric-backquote t)
+  (setq markdown-enable-highlighting-syntax t)
+  (setq markdown-live-preview-delete-export 'delete-on-destroy)
+
+  (add-hook 'markdown-mode-hook #'markdown-toc-mode)
+  ;; prefer GitHub-flavored MD for files named exactly 'README.md'
+  (add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode)))
+
+;; MD TOC
+(after! markdown-mode (straight-use-package 'markdown-toc))
+
+(after! markdown-toc
+  (setq markdown-toc-indentation-space  4)
+  (setq markdown-toc-list-item-marker "-")
+  (add-hook 'before-save-hook #'markdown-toc-generate-or-refresh-toc nil t))
 #+end_src
 
 ** Assembly
