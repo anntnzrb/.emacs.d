@@ -1210,20 +1210,33 @@ in short, the /7 rules/ summarized:
 
   ;; text-mode abbrevs
   (let ((table text-mode-abbrev-table))
+    ;; Emacs-related
+    (define-abbrev table "emacs"   "Emacs")
+    (define-abbrev table "emacs27" "EmacsV27")
+    (define-abbrev table "emacs28" "EmacsV28")
+    (define-abbrev table "orgmode" "Org-Mode")
+    (define-abbrev table "melpa"   "MELPA")
+
+    ;; misc
     (define-abbrev table "mymail" user-mail-address)
-    (define-abbrev table "latex" "LaTeX")
-    (define-abbrev table "html"  "HTML")
-    (define-abbrev table "ghub"  "GitHub")
-    (define-abbrev table "glab"  "GitLab")
-    (define-abbrev table "yt"    "YouTube"))
+    (define-abbrev table "ghub"   "GitHub")
+    (define-abbrev table "glab"   "GitLab")
+    (define-abbrev table "yt"     "YouTube")
+
+    ;; prog-languages & others
+    (define-abbrev table "cpp"       "C++")
+    (define-abbrev table "readme"    "README")
+    (define-abbrev table "latex"     "LaTeX")
+    (define-abbrev table "html"      "HTML")
+    (define-abbrev table "soyscript" "JavaScript"))
 
   ;; binds
   (def-key! ctl-x-map
     "a e" #'expand-abbrev
     "a u" #'unexpand-abbrev)
 
-;; disable "Abbrev" lighter
-(blackout 'abbrev-mode))
+  ;; disable "Abbrev" lighter
+  (blackout 'abbrev-mode))
 
 (add-hook 'text-mode-hook #'abbrev-mode)
 #+end_src
