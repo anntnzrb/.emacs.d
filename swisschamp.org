@@ -1023,7 +1023,7 @@ shared settings for Lisp-like programming languages.
 *** HTML
 
 #+begin_src emacs-lisp
-(after! html-mode
+(after! sgml-mode
   (add-hook 'sgml-mode-hook #'sgml-electric-tag-pair-mode)
   ;; LSP
   (add-hook 'sgml-mode-hook #'lsp-deferred))
