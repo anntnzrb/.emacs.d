@@ -566,8 +566,6 @@ under its respective =mode-map=-ing.
 
 ;; some defaults i dislike from the global map
 (undef-key!
-  "C-SPC"
-  "C-@"
   "C-z")
 
 (undef-key!
