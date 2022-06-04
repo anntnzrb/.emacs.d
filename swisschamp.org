@@ -549,6 +549,13 @@ place where general binds go, the rest should be on its respective section
 under its respective =mode-map=-ing.
 
 #+begin_src emacs-lisp
+;;; defaults with undesired behaviour IMHO
+;; on the following modes list, pressing `q' kill invoke `quit-window' which
+;; literally only kills the window but leaves the buffer in there for you to
+;; manually kill it; remap this behaviour to close-and-kill instead.
+(def-key! '(Info-mode-map dired-mode-map help-mode-map)
+  [remap quit-window] #'kill-buffer-and-window)
+
 ;; some defaults i dislike from the global map
 (undef-key!
   "C-SPC"
@@ -1163,6 +1170,9 @@ in short, the /7 rules/ summarized:
   [remap describe-variable] #'helpful-variable)
 
 (after! helpful
+  (def-key! 'helpful-mode-map
+    [remap quit-window] #'kill-buffer-and-window)
+
   ;; vi binds
   (annt--evil-collection-init 'helpful))
 #+end_src
