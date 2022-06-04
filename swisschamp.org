@@ -268,9 +268,17 @@ variable; for example, not spawning a window at all after the conclusion of a
 (after! window
   (setq display-buffer-alist
         `(
-          ;; no windows at all
+          ;;; no windows at all
+          ;; shells
           ("\\`\\*Async shell command\\*\\'"
-           (display-buffer-no-window)))))
+           (display-buffer-no-window))
+
+          ;; help-like buffers
+          ("\\*\\(.* # Help.*\\|Help\\)\\*"
+           (display-buffer-in-side-window)
+           (window-width . 0.36)
+           (side         . right)
+           (slot         . 0)))))
 #+end_src
 
 =ibuffer= is a built-in package which can replace the traditional
@@ -1173,6 +1181,13 @@ in short, the /7 rules/ summarized:
   (def-key! 'helpful-mode-map
     [remap quit-window] #'kill-buffer-and-window)
 
+  ;; help window position
+  (add-to-list 'display-buffer-alist '("\\*helpful.*\\*"
+                                       (display-buffer-in-side-window)
+                                       (window-width . 0.36)
+                                       (side         . right)
+                                       (slot         . 0)) t)
+
   ;; vi binds
   (annt--evil-collection-init 'helpful))
 #+end_src
@@ -1449,6 +1464,12 @@ one of /Emacs/' killer features.
                               odt
                               org
                               texinfo))
+
+  (add-to-list 'display-buffer-alist '("\\*Org Src.*\\*"
+                                       (display-buffer-in-side-window)
+                                       (window-height . 0.3)
+                                       (side          . bottom)
+                                       (slot          . 0)) t)
 
   (def-key! org-mode-map
     "<tab>" #'org-cycle)
