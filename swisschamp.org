@@ -264,6 +264,10 @@ rules for window placement can be dictated via the =display-buffer-alist=
 variable; for example, not spawning a window at all after the conclusion of a
 =async-shell-command=.
 
+/Protesilaos'/ [[https://youtu.be/rjOhJMbA-q0][video]] on the matter explains a few concepts like =side=, =slot=,
+and other =display-buffer-*= commands.  it is a great introduction to window
+management.
+
 #+begin_src emacs-lisp
 (after! window
   (setq display-buffer-alist
