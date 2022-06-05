@@ -26,7 +26,7 @@
 
 ;;; Code:
 
-(defun swisschamp--add-hook (hooks functions &optional depth local)
+(defun swc-helper--add-hook (hooks functions &optional depth local)
   "Replacement and wrapper for `add-hook'.
 Add N FUNCTIONS to M HOOKS.  Both optional DEPTH and LOCAL arguments are passed
 to `add-hook'."
@@ -38,9 +38,9 @@ to `add-hook'."
     (dolist (fn functions)
       (add-hook hook fn depth local))))
 
-(defalias 'add-hook!  #'swisschamp--add-hook)
+(defalias 'add-hook!  #'swc-helper--add-hook)
 
-(defmacro swisschamp--defun-hook (name arglist hooks docstring &rest body)
+(defmacro swc-helper--defun-hook (name arglist hooks docstring &rest body)
   "Define NAME as a function and set its mandatory documentation as DOCSTRING.
 ARGLIST and BODY behave the same as `defun'.  HOOKS is an unquoted list of
 hooks to which the function will be applied to.
@@ -64,7 +64,11 @@ This is useful for `buffer-local' variables, which need a function (or a
      (dolist (hook (quote ,hooks))
        (add-hook hook (quote ,name)))))
 
-(defalias 'defun-hook! #'swisschamp--defun-hook)
+(defalias 'defun-hook! #'swc-helper--defun-hook)
 
 (provide 'swisschamp-helper)
 ;;; swisschamp-helper.el ends here
+
+;; Local Variables:
+;; read-symbol-shorthands: (("swc-" . "swisschamp-"))
+;; End:

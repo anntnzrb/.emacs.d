@@ -43,7 +43,7 @@
 ;; WARNING: Reset garbage collector (should be at the end of this file)
 ;; After everything else is set-up, set the garbage collector to a considerable
 ;; non-archaic value.
-(defun swisschamp--init-setup-gc ()
+(defun swc-init--setup-gc ()
   "Sets up efficient garbage collector settings.
 The following values are modified: `gc-cons-threshold' and
 `gc-cons-percentage'
@@ -52,7 +52,7 @@ NOTE: Garbage collector was also previously modified at 'early-init.el'."
   (setq gc-cons-threshold (* 20 1024 1024))
   (setq gc-cons-percentage 0.1))
 
-(defun swisschamp--init-debug-init()
+(defun swc-init--debug-init()
   "Displays information related to initialization."
   (let ((pkg-count 0)
         (init-time (emacs-init-time)))
@@ -82,27 +82,27 @@ NOTE: Garbage collector was also previously modified at 'early-init.el'."
      nil
      (expand-file-name "emacs.log" user-emacs-directory))))
 
-(defun swisschamp--init-expand-file-name (file extension)
+(defun swc-init--expand-file-name (file extension)
   "Return canonical path to FILE to Emacs config with EXTENSION."
   (locate-user-emacs-file
    (concat file extension)))
 
-(defun swisschamp--init-org-tangle-and-byte-compile (file target-file)
+(defun swc-init--org-tangle-and-byte-compile (file target-file)
   "Tangle given FILE to TARGET-FILE and byte-compile it."
   (require 'ob-tangle)
   (org-babel-tangle-file file target-file)
   (byte-compile-file          target-file))
 
-(defun swisschamp--init-update-files ()
+(defun swc-init--update-files ()
   "If configuration files have been modified, update them.
 The Org file is compared with the tangled '.el' file; if the latter is older
 than the Org file, delete the '.el' file code and re-tangle it, byte-compile it
 afterwards."
   (interactive)
   (let* ((file swisschamp--file)
-         (file-org (swisschamp--init-expand-file-name file ".org"))
-         (file-el  (swisschamp--init-expand-file-name file ".el"))
-         (file-elc (swisschamp--init-expand-file-name file ".elc")))
+         (file-org (swc-init--expand-file-name file ".org"))
+         (file-el  (swc-init--expand-file-name file ".el"))
+         (file-elc (swc-init--expand-file-name file ".elc")))
 
     (when (or (file-newer-than-file-p file-org file-el)
               (not (file-exists-p file-elc)))
@@ -110,20 +110,20 @@ afterwards."
       (ignore-errors
         (delete-file file-el  t)
         (delete-file file-elc t))
-      (swisschamp--init-org-tangle-and-byte-compile file-org file-el))))
+      (swc-init--org-tangle-and-byte-compile file-org file-el))))
 
-(defun swisschamp--init-load-file ()
+(defun swc-init--load-file ()
   "Load the configuration file.
 This step should be done after tangling & byte-compiling."
   (let* ((file swisschamp--file)
-         (file-org (swisschamp--init-expand-file-name file ".org"))
-         (file-el  (swisschamp--init-expand-file-name file ".el")))
+         (file-org (swc-init--expand-file-name file ".org"))
+         (file-el  (swc-init--expand-file-name file ".el")))
 
     ;; only tangle if '.el' file does not exists
     (unless (file-exists-p file-el)
       (swisschamp--notify-and-log "Literate configuration has not been tangled yet...")
       (swisschamp--notify-and-log "Proceeding to tangle & byte-compile configuration...")
-      (swisschamp--init-org-tangle-and-byte-compile file-org file-el)
+      (swc-init--org-tangle-and-byte-compile file-org file-el)
       (swisschamp--notify-and-log "Literate configuration was tangled & byte-compiled."))
 
     ;; finally load the configuration file
@@ -139,15 +139,19 @@ This step should be done after tangling & byte-compiling."
 ;; set working directory to '~/' regardless of where Emacs was started from
 (cd (expand-file-name "~/"))
 
-(add-hook 'emacs-startup-hook #'swisschamp--init-setup-gc)
-(add-hook 'emacs-startup-hook #'swisschamp--init-debug-init)
+(add-hook 'emacs-startup-hook #'swc-init--setup-gc)
+(add-hook 'emacs-startup-hook #'swc-init--debug-init)
 
 ;; set to both hooks to ensure config is always updated and byte-compiled, for
 ;; startup times it's possible to only keep `kill-emacs-hook'.
-(add-hook 'emacs-startup-hook #'swisschamp--init-update-files)
-(add-hook 'kill-emacs-hook    #'swisschamp--init-update-files)
+(add-hook 'emacs-startup-hook #'swc-init--update-files)
+(add-hook 'kill-emacs-hook    #'swc-init--update-files)
 
-(swisschamp--init-load-file)
+(swc-init--load-file)
 
 (provide 'init)
 ;;; init.el ends here
+
+;; Local Variables:
+;; read-symbol-shorthands: (("swc-" . "swisschamp-"))
+;; End:

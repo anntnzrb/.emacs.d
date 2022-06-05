@@ -31,7 +31,7 @@
 ;; like the ':defer' keyword in `use-package'.
 ;; This was taken from Doom Emacs' core.
 ;; <https://github.com/doomemacs/doomemacs/blob/1b8f46c7c5893d63e4bcebc203c0d28df9f5981b/core/core-lib.el#L506-L549>
-(defmacro after! (package &rest body)
+(defmacro swc-core--with-after-package (package &rest body)
   "Evaluate BODY after PACKAGE have loaded.
 
 PACKAGE is a symbol or list of them.  These are package names, not modes,
@@ -74,9 +74,17 @@ This is a wrapper around `eval-after-load' that:
                (setq body `((after! ,next ,@body)))))
             (`(after! (:and ,@package) ,@body))))))
 
-(defmacro featurep! (feature &rest body)
+(defalias 'after! #'swc-core--with-after-package)
+
+(defmacro swc-core--with-featurep (feature &rest body)
   "Eval BODY if FEATURE is present."
   `(when (featurep ,feature) ,@body))
 
+(defalias 'featurep! #'swc-core--with-featurep)
+
 (provide 'swisschamp-core)
 ;;; swisschamp-core.el ends here
+
+;; Local Variables:
+;; read-symbol-shorthands: (("swc-" . "swisschamp-"))
+;; End:
