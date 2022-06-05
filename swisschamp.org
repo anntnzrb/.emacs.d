@@ -21,9 +21,8 @@
     - [[#early-initel][=early-init.el=]]
     - [[#initel][=init.el=]]
   - [[#preamble][preamble]]
-  - [[#package-management][package management]]
-    - [[#straightel][~straight.el~]]
-  - [[#helpers][helpers]]
+    - [[#package-management][package management]]
+    - [[#helpers][helpers]]
   - [[#generals][generals]]
     - [[#windows-buffers-and-tabs][windows, buffers and tabs]]
     - [[#emacs-server][Emacs server]]
@@ -119,9 +118,7 @@ from external sources.
 (require 'swisschamp-helper)
 #+end_src
 
-** package management
-
-*** ~straight.el~
+*** package management
 
 | [[https://github.com/raxod502/straight.el][straight]] | purely functional package manager |
 
@@ -151,18 +148,46 @@ a few reasons why i consider =straight.el=:
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-(after! straight
-  (setq straight-repository-branch "master")
+(setq straight-repository-branch "master")
 
-  ;; do not fully clone repos, it's just not needed
-  (setq straight-vc-git-default-clone-depth 1)
+;; do not fully clone repos, it's just not needed
+(setq straight-vc-git-default-clone-depth 1)
 
-  ;; always prefer native compilation
-  (setq straight-disable-compile nil)
-  (setq straight-disable-native-compile nil))
+;; always prefer native compilation
+(setq straight-disable-compile nil)
+(setq straight-disable-native-compile nil)
 #+end_src
 
-** helpers
+| [[https://github.com/jwiegley/use-package][use-package]] | a macro which allows writing declarative configurations |
+
+TODO :: docs
+
+#+begin_src emacs-lisp
+(straight-use-package 'use-package)
+
+;; always lazy load packages, unless instructed otherwise; use `:demand' to do
+;; so, for extra info, see:
+;; <https://github.com/jwiegley/use-package#notes-about-lazy-loading>
+(setq use-package-always-defer t)
+
+(defmacro annt--use-package-builtin-package (package &rest body)
+  "Wrapper around `use-package' without external package integration, this is
+  default behaviour, meant for explicitness purposed.
+  PACKAGE and BODY are as in `use-package.'"
+  `(use-package ,package ,@body))
+
+(defalias 'use-builtin-package! #'annt--use-package-builtin-package)
+
+(defmacro annt--use-package-external-package (package &rest body)
+  "Wrapper around `use-package' with external package integration; `straight.el'
+  in this case.
+  PACKAGE and BODY are as in `use-package.'"
+  `(use-package ,package :straight t ,@body))
+
+(defalias 'use-external-package! #'annt--use-package-external-package)
+#+end_src
+
+*** helpers
 
 | [[https://github.com/noctuid/general.el][general]] | powerful package that offers macros and wrappers for key, advice and hook definitions |
 
@@ -305,7 +330,7 @@ buffers.
 (setq ibuffer-show-empty-filter-groups  nil)
 (setq ibuffer-default-sorting-reversep  nil)
 
-(after! ibuffer (annt--evil-collection-init 'ibuffer))
+;;(after! ibuffer (annt--evil-collection-init 'ibuffer))
 
 (def-key! [remap list-buffers] #'ibuffer)
 #+end_src
