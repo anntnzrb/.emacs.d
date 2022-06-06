@@ -54,6 +54,7 @@ NOTE: Garbage collector was also previously modified at 'early-init.el'."
 
 (defun swc-init--debug-init()
   "Displays information related to initialization."
+  (interactive)
   (let ((pkg-count 0)
         (init-time (emacs-init-time)))
 
