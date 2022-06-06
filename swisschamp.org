@@ -186,7 +186,7 @@ detailed above.
   ;; always lazy load packages, unless instructed otherwise; use `:demand' to do
   ;; so, for extra info, see:
   ;; <https://github.com/jwiegley/use-package#notes-about-lazy-loading>
-  (setq use-package-verbose        'debug)
+  (setq use-package-verbose           nil)
   (setq use-package-always-defer        t)
   (setq use-package-check-before-init nil) ;; performance hit
   (setq use-package-compute-statistics  t)
@@ -303,15 +303,16 @@ settings that do not belong anywhere specific.
 ;; always autorevert (dynamically refresh buffer contents)
 (use-builtin-package!
  autorevert
- :init
- (add-hook 'emacs-startup-hook #'global-auto-revert-mode)
+ :defer 2
  :config
- (setq auto-revert-verbose t))
+ (setq auto-revert-verbose t)
+ (add-hook 'emacs-startup-hook #'global-auto-revert-mode))
 
 ;; performance improvement for really long files
 (use-builtin-package!
  so-long
- :init
+ :defer 2
+ :config
  (global-so-long-mode))
 #+end_src
 
@@ -391,7 +392,8 @@ task at hand and all the file editing happens on the other(s) tab(s).
 #+begin_src emacs-lisp
 (use-builtin-package!
  tab-bar
- :init
+ :defer 2
+ :config
  (setq tab-bar-show 1) ;; only show tabs starting from 2+
  (setq tab-bar-position                    nil)
  (setq tab-bar-tab-hints                   nil)
@@ -405,7 +407,7 @@ task at hand and all the file editing happens on the other(s) tab(s).
  ;; if `dashboard' is present, prefer it
  (setq tab-bar-new-tab-choice
        (if (featurep 'dashboard) "*dashboard*" "~/"))
- :config
+
  (tab-bar-mode)         ;; enable tabs
  (tab-bar-history-mode)) ;; enable tab history for undo/redo functionality
 #+end_src
@@ -575,7 +577,8 @@ me not to seek for /Vi/ emulation everywhere.
 (use-external-package!
  evil-surround
  :after evil
- :init
+ :defer 2
+ :config
  (global-evil-surround-mode))
 #+end_src
 
@@ -800,8 +803,7 @@ notice.
 #+begin_src emacs-lisp
 (use-external-package!
  keycast
- :init
- (add-hook 'emacs-startup-hook #'keycast-mode)
+ :defer 2
  :config
  (setq keycast-mode-line-format "%k%c%r")
  (setq keycast-tab-bar-format   "%k%c%r")
@@ -820,7 +822,9 @@ notice.
                mouse-movement-p
                mwheel-scroll
                lsp-ui-doc--handle-mouse-movement))
-   (add-to-list 'keycast-substitute-alist `(,ev nil))))
+   (add-to-list 'keycast-substitute-alist `(,ev nil)))
+
+ (add-hook 'emacs-startup-hook #'keycast-mode))
 #+end_src
 
 *** tooltips
@@ -896,14 +900,15 @@ section dedicated to programming & programming languages specifically.
 (use-external-package!
  aggressive-indent
  :after prog-mode
- :init
- (add-hook 'prog-mode-hook #'aggressive-indent-mode)
+ :defer 2
  :config
  (setq aggressive-indent-comments-too    t)
  (setq aggressive-indent-sit-for-time 0.25)
 
  (def-key! aggressive-indent-mode-map
-   "C-c C-q" #'aggressive-indent-indent-region-and-on))
+   "C-c C-q" #'aggressive-indent-indent-region-and-on)
+
+ (add-hook 'prog-mode-hook #'aggressive-indent-mode))
 #+end_src
 
 | [[https://github.com/emacs-lsp/lsp-mode/][lsp-mode]] | Emacs client/library for the /Language Server Protocol (LSP)/ |
@@ -1282,14 +1287,14 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (use-external-package!
  which-key
- :init
- (which-key-mode)
+ :defer 5
  :config
  (setq which-key-lighter nil) ;; disable lighter on mode-line
  (setq which-key-paging-key          "<next>")
  (setq which-key-idle-delay               0.5)
  (setq which-key-max-display-columns      nil)
- (setq which-key-sort-order #'which-key-key-order-alpha))
+ (setq which-key-sort-order #'which-key-key-order-alpha)
+ (which-key-mode))
 #+end_src
 
 | [[https://github.com/Wilfred/helpful][helpful]] | better Emacs *help* buffer |
@@ -1297,7 +1302,7 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (use-external-package!
  helpful
- :demand t
+ :defer 10
  :config
  (def-key!
    [remap      describe-key] #'helpful-key
@@ -1328,7 +1333,8 @@ in short, the /7 rules/ summarized:
 (use-external-package!
  hl-todo
  :after (:or text-mode prog-mode)
- :init
+ :defer 2
+ :config
  (add-hook! '(prog-mode-hook text-mode-hook) #'hl-todo-mode))
 #+end_src
 
@@ -1337,7 +1343,9 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (use-external-package!
  rainbow-delimiters
- :init
+ :after prog-mode
+ :defer 2
+ :config
  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
 #+end_src
 
@@ -1346,13 +1354,13 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (use-external-package!
  beacon
- :init
- (beacon-mode)
+ :defer 2
  :config
  (setq beacon-lighter         nil)
  (setq beacon-size    fill-column)
  (setq beacon-blink-delay     0.5)
- (setq beacon-blink-duration  0.5))
+ (setq beacon-blink-duration  0.5)
+ (beacon-mode))
 #+end_src
 
 ** completion & extras
@@ -1362,8 +1370,7 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (use-builtin-package!
  abbrev
- :init
- (add-hook 'text-mode-hook #'abbrev-mode)
+ :defer 2
  :config
  (setq only-global-abbrevs         nil)
  (setq abbrev-all-caps               t)
@@ -1398,6 +1405,8 @@ in short, the /7 rules/ summarized:
  (def-key! ctl-x-map
    "a e" #'expand-abbrev
    "a u" #'unexpand-abbrev)
+
+ (add-hook 'text-mode-hook #'abbrev-mode)
 
  ;; disable "Abbrev" lighter
  (blackout 'abbrev-mode))
@@ -1442,12 +1451,12 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (use-external-package!
  marginalia
- :init
- (marginalia-mode)
+ :defer 2
  :config
  (setq marginalia-align    'left)
  (setq marginalia-separator  nil)
- (setq marginalia-field-width 80))
+ (setq marginalia-field-width 80)
+ (marginalia-mode))
 #+end_src
 
 | [[https://github.com/company-mode/company-mode][company]] | text completion completion framework |
@@ -1456,8 +1465,7 @@ in short, the /7 rules/ summarized:
 (use-external-package!
  company
  :after prog-mode
- :init
- (add-hook 'prog-mode-hook #'company-mode)
+ :defer 2
  :config
  (setq company-lighter-base      "Company")
  (setq company-idle-delay             0.15)
@@ -1469,7 +1477,9 @@ in short, the /7 rules/ summarized:
    "C-j"   #'company-select-next
    "C-k"   #'company-select-previous
    "<tab>" #'company-complete-selection
-   "TAB"   #'company-complete-selection))
+   "TAB"   #'company-complete-selection)
+
+ (add-hook 'prog-mode-hook #'company-mode))
 #+end_src
 
 | [[https://github.com/oantolin/embark][embark]] | perform actions on targets |
@@ -1502,11 +1512,12 @@ in short, the /7 rules/ summarized:
 (use-external-package!
  yasnippet
  :after (:or text-mode prog-mode)
- :init
- (add-hook! '(prog-mode-hook text-mode-hook) #'yas-minor-mode)
+ :defer 2
  :config
  (def-key! yas-minor-mode-map "C-<tab>" #'yas-expand)
  (yas-reload-all)
+ (add-hook! '(prog-mode-hook text-mode-hook) #'yas-minor-mode)
+
  ;; disable "yas" lighter
  (blackout 'yas-minor-mode))
 #+end_src
@@ -1546,12 +1557,14 @@ words.
 #+begin_src emacs-lisp
 (use-builtin-package!
  flyspell
- :init
- (add-hook 'text-mode-hook #'flyspell-mode)
+ :defer 2
  :config
  (setq flyspell-issue-welcome-flag nil)
  (setq flyspell-issue-message-flag nil)
- (def-key! "M-\"" #'flyspell-buffer))
+
+ (def-key! "M-\"" #'flyspell-buffer)
+
+ (add-hook 'text-mode-hook #'flyspell-mode))
 #+end_src
 
 ** bookmarks
