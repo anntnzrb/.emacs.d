@@ -162,29 +162,51 @@ a few reasons why i consider =straight.el=:
 
 TODO :: docs
 
+for this matter, *the only allowed keywords* are the following:
+
+- =:init=
+- =:config=
+- =:defer=
+- =:demand=
+- =:after=
+- =:disabled=
+- =:pin=
+
+1. neither =:ensure= or =:straight= should be set explicitly as there are
+   separate macros from external and built-in packages, also i'm =straight.el=
+   anyways.
+
+any other keyword(s) NOT listed above is/are *prohibited* for the reasons
+detailed above.
+
 #+begin_src emacs-lisp
-(straight-use-package 'use-package)
+(eval-when-compile
+  (straight-use-package 'use-package)
 
-;; always lazy load packages, unless instructed otherwise; use `:demand' to do
-;; so, for extra info, see:
-;; <https://github.com/jwiegley/use-package#notes-about-lazy-loading>
-(setq use-package-always-defer t)
+  ;; always lazy load packages, unless instructed otherwise; use `:demand' to do
+  ;; so, for extra info, see:
+  ;; <https://github.com/jwiegley/use-package#notes-about-lazy-loading>
+  (setq use-package-verbose        'debug)
+  (setq use-package-always-defer        t)
+  (setq use-package-check-before-init nil) ;; performance hit
+  (setq use-package-compute-statistics  t)
+  (setq use-package-ignore-unknown-keywords nil)
 
-(defmacro annt--use-package-builtin-package (package &rest body)
-  "Wrapper around `use-package' without external package integration, this is
+  (defmacro annt--use-package-builtin-package (package &rest body)
+    "Wrapper around `use-package' without external package integration, this is
   default behaviour, meant for explicitness purposed.
   PACKAGE and BODY are as in `use-package.'"
-  `(use-package ,package ,@body))
+    `(use-package ,package ,@body))
 
-(defalias 'use-builtin-package! #'annt--use-package-builtin-package)
+  (defalias 'use-builtin-package! #'annt--use-package-builtin-package)
 
-(defmacro annt--use-package-external-package (package &rest body)
-  "Wrapper around `use-package' with external package integration; `straight.el'
+  (defmacro annt--use-package-external-package (package &rest body)
+    "Wrapper around `use-package' with external package integration; `straight.el'
   in this case.
   PACKAGE and BODY are as in `use-package.'"
-  `(use-package ,package :straight t ,@body))
+    `(use-package ,package :straight t ,@body))
 
-(defalias 'use-external-package! #'annt--use-package-external-package)
+  (defalias 'use-external-package! #'annt--use-package-external-package))
 #+end_src
 
 *** helpers
@@ -248,21 +270,22 @@ for simplicity and consistency the definitions have been aliased, it should be
 intuitive.
 
 #+begin_src emacs-lisp
-(straight-use-package 'general)
-
-(setq general-implicit-kbd t) ;; auto expand "str" to (kbd "str")
-
-(defalias 'def-key!   #'general-def)
-(defalias 'undef-key! #'general-unbind)
-(defalias 'after-gui! #'general-after-gui)
-
-(add-hook 'after-init-hook #'general-auto-unbind-keys)
+(use-external-package!
+ general
+ :init
+ (add-hook 'after-init-hook #'general-auto-unbind-keys)
+ (setq general-implicit-kbd t) ;; auto expand "str" to (kbd "str")
+ (defalias 'def-key!   #'general-def)
+ (defalias 'undef-key! #'general-unbind)
+ (defalias 'after-gui! #'general-after-gui))
 #+end_src
 
 | [[https://github.com/radian-software/blackout][blackout]] | modeline lighters cleaner |
 
 #+begin_src emacs-lisp
-(straight-use-package 'blackout)
+(use-external-package!
+ blackout
+ :demand t)
 #+end_src
 
 ** generals
@@ -270,17 +293,26 @@ intuitive.
 settings that do not belong anywhere specific.
 
 #+begin_src emacs-lisp
-(setq delete-by-moving-to-trash t) ;; safer than `rm'
-(setq use-short-answers         t)
-(setq visible-bell              t) ;; flash screen
+(use-builtin-package!
+ emacs
+ :config
+ (setq delete-by-moving-to-trash t) ;; safer than `rm'
+ (setq use-short-answers         t)
+ (setq visible-bell              t)) ;; flash screen
 
 ;; always autorevert (dynamically refresh buffer contents)
-(add-hook 'after-init-hook #'global-auto-revert-mode)
-(after! autorevert
-  (setq auto-revert-verbose t))
+(use-builtin-package!
+ autorevert
+ :init
+ (add-hook 'emacs-startup-hook #'global-auto-revert-mode)
+ :config
+ (setq auto-revert-verbose t))
 
 ;; performance improvement for really long files
-(global-so-long-mode)
+(use-builtin-package!
+ so-long
+ :init
+ (global-so-long-mode))
 #+end_src
 
 *** windows, buffers and tabs
@@ -294,20 +326,22 @@ and other =display-buffer-*= commands.  it is a great introduction to window
 management.
 
 #+begin_src emacs-lisp
-(after! window
-  (setq display-buffer-alist
-        `(
+(use-builtin-package!
+ window
+ :config
+ (setq display-buffer-alist
+       `(
           ;;; no windows at all
-          ;; shells
-          ("\\`\\*Async shell command\\*\\'"
-           (display-buffer-no-window))
+         ;; shells
+         ("\\`\\*Async shell command\\*\\'"
+          (display-buffer-no-window))
 
-          ;; help-like buffers
-          ("\\*\\(.* # Help.*\\|Help\\)\\*"
-           (display-buffer-in-side-window)
-           (window-width . 0.36)
-           (side         . right)
-           (slot         . 0)))))
+         ;; help-like buffers
+         ("\\*\\(.* # Help.*\\|Help\\)\\*"
+          (display-buffer-in-side-window)
+          (window-width . 0.36)
+          (side         . right)
+          (slot         . 0)))))
 #+end_src
 
 =ibuffer= is a built-in package which can replace the traditional
@@ -320,19 +354,26 @@ set of commands can really enhance one's workflow when working with multiple
 buffers.
 
 #+begin_src emacs-lisp
-;; remap traditional `list-buffers'
-(setq ibuffer-expert                      t)
-(setq ibuffer-view-ibuffer              nil)
-(setq ibuffer-case-fold-search            t)
-(setq ibuffer-use-other-window          nil)
-(setq ibuffer-default-sorting-mode 'recency)
-(setq ibuffer-always-compile-formats      t)
-(setq ibuffer-show-empty-filter-groups  nil)
-(setq ibuffer-default-sorting-reversep  nil)
+(use-builtin-package!
+ ibuffer
+ :init
+ (def-key! [remap list-buffers] #'ibuffer) ;; remap traditional `list-buffers'
+ :config
+ (setq ibuffer-expert                      t)
+ (setq ibuffer-view-ibuffer              nil)
+ (setq ibuffer-case-fold-search            t)
+ (setq ibuffer-use-other-window          nil)
+ (setq ibuffer-default-sorting-mode 'recency)
+ (setq ibuffer-always-compile-formats      t)
+ (setq ibuffer-show-empty-filter-groups  nil)
+ (setq ibuffer-default-sorting-reversep  nil)
 
-;;(after! ibuffer (annt--evil-collection-init 'ibuffer))
+ (def-key! [remap quit-window] #'kill-buffer-and-window)
 
-(def-key! [remap list-buffers] #'ibuffer)
+ (use-external-package!
+  evil-collection
+  :config
+  (evil-collection-init 'ibuffer)))
 #+end_src
 
 /David Wilson/'s tutorial on how to
@@ -348,28 +389,25 @@ as simple as defining a new tab which holds the various shell i need for the
 task at hand and all the file editing happens on the other(s) tab(s).
 
 #+begin_src emacs-lisp
-(defun-hook! annt--tab-bar-setup ()
-  emacs-startup-hook
-  "Sets up `tab-bar-mode' right after Emacs starts."
-  (setq tab-bar-show 1) ;; only show tabs starting from 2+
-  (setq tab-bar-position                    nil)
-  (setq tab-bar-tab-hints                   nil)
-  (setq tab-bar-new-tab-to           'rightmost)
-  (setq tab-bar-close-tab-select        'recent)
-  (setq tab-bar-close-button-show     'selected)
-  (setq tab-bar-select-tab-modifiers '(control))
-  (setq tab-bar-close-last-tab-choice       nil)
+(use-builtin-package!
+ tab-bar
+ :init
+ (setq tab-bar-show 1) ;; only show tabs starting from 2+
+ (setq tab-bar-position                    nil)
+ (setq tab-bar-tab-hints                   nil)
+ (setq tab-bar-new-tab-to           'rightmost)
+ (setq tab-bar-close-tab-select        'recent)
+ (setq tab-bar-close-button-show     'selected)
+ (setq tab-bar-select-tab-modifiers '(control))
+ (setq tab-bar-close-last-tab-choice       nil)
 
-  ;; open a new tab at '~/' with `dired'
-  ;; if `dashboard' is present, prefer it
-  (setq tab-bar-new-tab-choice
-        (if (featurep 'dashboard) "*dashboard*" "~/"))
-
-  ;; enable tabs
-  (tab-bar-mode)
-
-  ;; enable tab history for undo/redo functionality
-  (tab-bar-history-mode))
+ ;; open a new tab at '~/' with `dired'
+ ;; if `dashboard' is present, prefer it
+ (setq tab-bar-new-tab-choice
+       (if (featurep 'dashboard) "*dashboard*" "~/"))
+ :config
+ (tab-bar-mode)         ;; enable tabs
+ (tab-bar-history-mode)) ;; enable tab history for undo/redo functionality
 #+end_src
 
 *** Emacs server
@@ -380,10 +418,13 @@ to "share" itself across new instances (those being graphical or via terminal).
 /Protesilaos/ provides a video tutorial with practical use cases [[https://youtu.be/BjhcmRMF9qs][here]].
 
 #+begin_src emacs-lisp
-(require 'server)
-(unless (or (server-running-p)
+(use-builtin-package!
+ server
+ :demand t
+ :config
+ (unless (or (server-running-p)
              (daemonp))
-  (add-hook 'after-init-hook #'server-start))
+   (add-hook 'after-init-hook #'server-start)))
 #+end_src
 
 *** indentification
@@ -391,8 +432,11 @@ to "share" itself across new instances (those being graphical or via terminal).
 information about myself.
 
 #+begin_src emacs-lisp
-(setq user-full-name    "anntnzrb")
-(setq user-mail-address "anntnzrb@proton.me")
+(use-builtin-package!
+ emacs
+ :config
+ (setq user-full-name    "anntnzrb")
+ (setq user-mail-address "anntnzrb@proton.me"))
 #+end_src
 
 *** custom custom file
@@ -408,12 +452,15 @@ going thru =customize= and accidentally set-up a settings or two.
 #+end_quote
 
 #+begin_src emacs-lisp
-;; change between `t' and `nil' to enable/disable custom file
-(let ((use-custom-file-p nil))
-  (setq custom-file
-        (if use-custom-file-p
-            (expand-file-name "custom.el" user-emacs-directory)
-          null-device)))
+(use-builtin-package!
+ emacs
+ :config
+ ;; change between `t' and `nil' to enable/disable custom file
+ (let ((use-custom-file-p nil))
+   (setq custom-file
+         (if use-custom-file-p
+             (expand-file-name "custom.el" user-emacs-directory)
+           null-device))))
 #+end_src
 
 *** backups
@@ -424,47 +471,54 @@ disable this feature as it can be annoying, /e.g/ (/Vim/'s swapfiles)...
 however, if set properly this can be a catastrophe saver.
 
 #+begin_src emacs-lisp
-(setq backup-directory-alist
-      `(("." . ,(concat user-emacs-directory "backups/"))))
-(setq make-backup-files     t)
-(setq backup-by-copying     t)
-(setq version-control       t)
-(setq delete-old-versions   t)
-(setq kept-new-versions     8)
-(setq kept-old-versions     2)
-(setq create-lockfiles    nil)
+(use-builtin-package!
+ files
+ :config
+ (setq backup-directory-alist
+       `(("." . ,(concat user-emacs-directory "backups/"))))
+ (setq make-backup-files     t)
+ (setq backup-by-copying     t)
+ (setq version-control       t)
+ (setq delete-old-versions   t)
+ (setq kept-new-versions     8)
+ (setq kept-old-versions     2)
+ (setq create-lockfiles    nil))
 #+end_src
 
 *** editing
 
 #+begin_src emacs-lisp
-(setq mode-require-final-newline         t)
-(setq-default tab-width                  4)
-(setq-default indent-tabs-mode         nil)
-(setq-default fill-column               79)
+(use-builtin-package!
+ emacs
+ :config
+ (setq mode-require-final-newline   t)
+ (setq-default tab-width            4)
+ (setq-default indent-tabs-mode   nil)
+ (setq-default fill-column         79)
 
-;; trailing whitespaces
-(defun-hook! annt--show-trailing-whitespace-setup ()
-  (prog-mode-hook text-mode-hook)
-  "Sets up `show-trailing-whitespace'."
-  (setq show-trailing-whitespace t))
+ ;; auto-fill
+ (add-hook! '(prog-mode-hook text-mode-hook) #'auto-fill-mode)
+ (blackout 'auto-fill-mode) ;; disable "Fill" lighter
 
-;; line numbers
-(defun-hook! annt--line-numbers-setup ()
-  (prog-mode-hook text-mode-hook)
-  "Sets up `display-line-numbers' and `display-fill-column-indicator'."
-  (setq display-line-numbers 'relative)
-  (setq display-fill-column-indicator-column (+ fill-column 1)))
+ ;; trailing whitespaces
+ (defun-hook! annt--show-trailing-whitespace-setup ()
+   (prog-mode-hook text-mode-hook)
+   "Sets up `show-trailing-whitespace'."
+   (setq show-trailing-whitespace t))
 
-;; display vertical column at line limit
-(global-display-fill-column-indicator-mode)
-(global-hl-line-mode) ;; line highlighting
+ ;; line numbers
+ (defun-hook! annt--line-numbers-setup ()
+   (prog-mode-hook text-mode-hook)
+   "Sets up `display-line-numbers' and `display-fill-column-indicator'."
+   (setq display-line-numbers 'relative)
+   (setq display-fill-column-indicator-column (+ fill-column 1)))
 
-(add-hook! '(prog-mode-hook text-mode-hook) #'auto-fill-mode)
-(blackout 'auto-fill-mode) ;; disable "Fill" lighter
+ ;; display vertical column at line limit
+ (global-display-fill-column-indicator-mode)
+ (global-hl-line-mode) ;; line highlighting
 
-;; delete trailing whitespaces prior saving
-(add-hook 'before-save-hook #'whitespace-cleanup)
+ ;; delete trailing whitespaces prior saving
+ (add-hook 'before-save-hook #'whitespace-cleanup))
 #+end_src
 
 *** Vi emulation
@@ -475,59 +529,54 @@ me not to seek for /Vi/ emulation everywhere.
 | [[https://github.com/emacs-evil/evil][evil]] | extensible vi layer |
 
 #+begin_src emacs-lisp
-(straight-use-package 'evil)
+(use-external-package!
+ evil
+ :demand t ;; Evil is used everywhere
+ :init
+ ;; the following 2 need to be set before loading `evil'
+ (setq evil-want-keybinding    nil)
+ (setq evil-undo-system 'undo-redo) ;; EmacsV28+
+ (evil-mode)
+ :config
+ (def-key! "C-M-<escape>" #'evil-local-mode)
+ (def-key! evil-insert-state-map "C-g" #'evil-normal-state)
 
-;; the following 2 need to be set before loading `evil'
-(setq evil-want-keybinding    nil)
-(setq evil-undo-system 'undo-redo) ;; EmacsV28+
-(evil-mode) ;; evil is used everywhere
-
-(after! evil
-  (def-key! "C-M-<escape>" #'evil-local-mode)
-  (def-key! evil-insert-state-map "C-g" #'evil-normal-state))
+ ;; the following are mass unbinds from annoying defaults Evil ships with:
+ (undef-key! '(evil-insert-state-map
+               evil-normal-state-map
+               evil-replace-state-map
+               evil-visual-state-map)
+   :with #'ignore
+   [mouse-2])
+ (undef-key! evil-motion-state-map [down-mouse-1])
+ (undef-key! '(evil-insert-state-map evil-motion-state-map) "C-z"))
 #+end_src
 
-the following are mass unbinds from annoying defaults Evil ships with:
-
-#+begin_src emacs-lisp
-(after! evil
-  (undef-key! '(evil-insert-state-map
-                evil-normal-state-map
-                evil-replace-state-map
-                evil-visual-state-map)
-    :with #'ignore
-    [mouse-2])
-
-  (undef-key! evil-motion-state-map [down-mouse-1])
-  (undef-key! '(evil-insert-state-map evil-motion-state-map) "C-z"))
-#+end_src
 
 | [[https://github.com/emacs-evil/evil-collection][evil-collection]] | collection of /Vi/ keybinds for some parts of /Emacs/ which are dealt incorrectly by evil |
 
 #+begin_src emacs-lisp
-(after! evil
-  (straight-use-package 'evil-collection)
-
-  (setq evil-collection-want-unimpaired-p nil)
-  ;; emtpy the list of available modes and enable individually; no surprises
-  ;; the list of modes may be found here:
-  ;; <https://github.com/emacs-evil/evil-collection/blob/master/evil-collection.el>
-  (setq evil-collection-mode-list nil)
-  (evil-collection-init '(info help (custom cus-edit))))
-
-(defun annt--evil-collection-init (modes)
-  "Wrapper around `evil-collection-init' which calls mentioned function only
-after `evil' has been loaded first.
-Argument MODES behaves the same."
-  (after! evil (evil-collection-init modes)))
+(use-external-package!
+ evil-collection
+ :after evil
+ :demand t
+ :config
+ (setq evil-collection-want-unimpaired-p nil)
+ ;; emtpy the list of available modes and enable individually; no surprises
+ ;; the list of modes may be found here:
+ ;; <https://github.com/emacs-evil/evil-collection/blob/master/evil-collection.el>
+ (setq evil-collection-mode-list nil)
+ (evil-collection-init '(info help (custom cus-edit))))
 #+end_src
 
 | [[https://github.com/emacs-evil/evil-surround][evil-surround]] | [[https://github.com/tpope/vim-surround][vim-surround]] emulation |
 
 #+begin_src emacs-lisp
-(after! evil
-  (straight-use-package 'evil-surround)
-  (global-evil-surround-mode))
+(use-external-package!
+ evil-surround
+ :after evil
+ :init
+ (global-evil-surround-mode))
 #+end_src
 
 *** mouse & cursor
@@ -546,38 +595,49 @@ mouse wheel behaviour:
 + holding =control= adjusts the size of text (GNU Emacs =27+=)
 
 #+begin_src emacs-lisp
-(setq make-pointer-invisible          t)
-(setq mouse-drag-copy-region        nil)
-(setq mouse-wheel-follow-mouse      nil)
-(setq mouse-wheel-progressive-speed nil)
-(setq scroll-preserve-screen-position t)
-
-(setq mouse-wheel-scroll-amount
-      '(1
-        ((meta) . 0.5)
-        ((control) . text-scale)))
+(use-builtin-package!
+ emacs
+ :config
+ (setq make-pointer-invisible          t)
+ (setq mouse-drag-copy-region        nil)
+ (setq mouse-wheel-follow-mouse      nil)
+ (setq mouse-wheel-progressive-speed nil)
+ (setq scroll-preserve-screen-position t)
+ (setq mouse-wheel-scroll-amount
+       '(1
+         ((meta) . 0.5)
+         ((control) . text-scale))))
 #+end_src
 
 **** cursor
 
 #+begin_src emacs-lisp
-(setq blink-cursor-blinks     0) ;; blink forever
-(setq blink-cursor-delay    0.2)
-(setq blink-cursor-interval 0.3)
+(use-builtin-package!
+ frame
+ :config
+ (setq blink-cursor-blinks     0) ;; blink forever
+ (setq blink-cursor-delay    0.2)
+ (setq blink-cursor-interval 0.3)
 
-;; hourglass cursor
-(setq display-hourglass t)
-(setq hourglass-delay   0) ;; display hourglass immediately
+ ;; settings for TTY Emacs
+ (unless (display-graphic-p)
+   (setq visible-cursor nil)))
+
+(use-builtin-package!
+ emacs
+ :config
+ ;; hourglass cursor
+ (setq display-hourglass t)
+ (setq hourglass-delay   0)) ;; display hourglass immediately
 
 ;; save cursor position
-(save-place-mode)
-(after! saveplace
-  (setq save-place-file (expand-file-name "backups/places" user-emacs-directory))
-  (setq save-place-forget-unreadable-files t))
-
-;; settings for TTY Emacs
-(unless (display-graphic-p)
-  (setq visible-cursor nil))
+(use-builtin-package!
+ saveplace
+ :init
+ (save-place-mode)
+ :config
+ (setq save-place-file (expand-file-name "backups/places" user-emacs-directory))
+ (setq save-place-forget-unreadable-files t))
 #+end_src
 
 *** binds
@@ -590,17 +650,20 @@ under its respective =mode-map=-ing.
 ;; on the following modes list, pressing `q' kill invoke `quit-window' which
 ;; literally only kills the window but leaves the buffer in there for you to
 ;; manually kill it; remap this behaviour to close-and-kill instead.
-(def-key! '(Info-mode-map dired-mode-map help-mode-map)
-  [remap quit-window] #'kill-buffer-and-window)
+(use-builtin-package!
+ emacs
+ :config
+ (def-key! '(Info-mode-map dired-mode-map help-mode-map)
+   [remap quit-window] #'kill-buffer-and-window)
 
-;; some defaults i dislike from the global map
-(undef-key!
-  "C-z")
+ ;; some defaults i dislike from the global map
+ (undef-key!
+   "C-z")
 
-(undef-key!
-  :with #'ignore
-  [mouse-2]
-  [mouse-3])
+ (undef-key!
+   :with #'ignore
+   [mouse-2]
+   [mouse-3]))
 #+end_src
 
 ** appearance
@@ -609,14 +672,16 @@ under its respective =mode-map=-ing.
 
 #+begin_src emacs-lisp
 (after-gui!
-  (let ((font-size 12))
-
-    ;; default
-    (set-face-attribute 'default nil
-                        :font (format "Iosevka-%s" font-size))
-    ;; code
-    (set-face-attribute 'fixed-pitch nil
-                        :font (format "FantasqueSansMono-%s" font-size))))
+  (use-builtin-package!
+   faces
+   :config
+   (let ((font-size 12))
+     ;; default
+     (set-face-attribute 'default nil
+                         :font (format "Iosevka-%s" font-size))
+     ;; code
+     (set-face-attribute 'fixed-pitch nil
+                         :font (format "FantasqueSansMono-%s" font-size)))))
 #+end_src
 
 *** themes
@@ -628,92 +693,100 @@ themes to only load if running via graphical Emacs (=display-graphic-p=);
 testing for now...
 
 #+begin_src emacs-lisp
-;; load modus-themes; don't enable yet
-(load-theme 'modus-vivendi t t)
+(use-builtin-package!
+ modus-themes
+ :init
+ (load-theme 'modus-vivendi t t) ;; load modus-themes; don't enable yet
+ :config
+ (setq modus-themes-links         '(background italic))
+ (setq modus-themes-region        '(no-extend bg-only accented))
+ (setq modus-themes-syntax        '(green-strings yellow-comments))
+ (setq modus-themes-mode-line     '(accented borderless))
+ (setq modus-themes-org-blocks    'greyscale)
+ (setq modus-themes-paren-match   '(bold underline))
+ (setq modus-themes-lang-checkers 'straight-underline)
+ (setq modus-themes-bold-constructs   t)
+ (setq modus-themes-italic-constructs t)
 
-(after! modus-themes
-  (setq modus-themes-links         '(background italic))
-  (setq modus-themes-region        '(no-extend bg-only accented))
-  (setq modus-themes-syntax        '(green-strings yellow-comments))
-  (setq modus-themes-mode-line     '(accented borderless))
-  (setq modus-themes-org-blocks    'greyscale)
-  (setq modus-themes-paren-match   '(bold underline))
-  (setq modus-themes-lang-checkers 'straight-underline)
-  (setq modus-themes-bold-constructs   t)
-  (setq modus-themes-italic-constructs t)
+ (def-key! "M-<f5>" #'modus-themes-toggle)
 
-  (def-key! "M-<f5>" #'modus-themes-toggle)
-
-  ;; if running via GUI, prefer light or dark theme depending on daytime
-  ;; else (terminal) prefer dark mode
-  (let ((time (string-to-number (format-time-string "%H"))))
-    (if (and (display-graphic-p) (and (> time 9) (< time 18)))
-        (modus-themes-load-operandi)
-      (modus-themes-load-vivendi))))
+ ;; if running via GUI, prefer light or dark theme depending on daytime
+ ;; else (terminal) prefer dark mode
+ (let ((time (string-to-number (format-time-string "%H"))))
+   (if (and (display-graphic-p) (and (> time 9) (< time 18)))
+       (modus-themes-load-operandi)
+     (modus-themes-load-vivendi))))
 #+end_src
 
 | [[https://github.com/domtronn/all-the-icons.el][all-the-icons]] | collection of various icon fonts |
 
 #+begin_src emacs-lisp
 (after-gui!
-  (straight-use-package 'all-the-icons)
-
-  (defun-hook! annt--all-the-icons-setup ()
-    after-init-hook
-    "Checks if `all-the-icons' fonts are downloaded, gets them if not."
-    (unless (file-exists-p (expand-file-name
-                            "~/.local/share/fonts/all-the-icons.ttf"))
-      (all-the-icons-install-fonts t))))
+  (use-external-package!
+   all-the-icons
+   :config
+   (defun-hook! annt--all-the-icons-setup ()
+     emacs-startup-hook
+     "Checks if `all-the-icons' fonts are downloaded, gets them if not."
+     (unless (file-exists-p (expand-file-name
+                             "~/.local/share/fonts/all-the-icons.ttf"))
+       (all-the-icons-install-fonts t)))))
 #+end_src
 
 *** dashboard
 
 #+begin_src emacs-lisp
-(straight-use-package 'dashboard)
+(use-external-package!
+ dashboard
+ :init
+ (dashboard-setup-startup-hook) ;; enable dashboard `after-init-hook'
+ :config
+ (setq dashboard-set-heading-icons  t)
+ (setq dashboard-show-shortcuts     t)
+ (setq dashboard-center-content     t)
+ (setq dashboard-set-file-icons     t)
+ (setq dashboard-set-init-info      t)
+ (setq dashboard-set-footer         t)
+ (setq dashboard-startup-banner 'logo)
 
-(dashboard-setup-startup-hook) ;; enable dashboard `after-init-hook'
+ (setq dashboard-banner-logo-title "Behold; GNU/Emacs")
 
-(after! dashboard
-  (setq dashboard-set-heading-icons  t)
-  (setq dashboard-show-shortcuts     t)
-  (setq dashboard-center-content     t)
-  (setq dashboard-set-file-icons     t)
-  (setq dashboard-set-init-info      t)
-  (setq dashboard-set-footer         t)
-  (setq dashboard-startup-banner 'logo)
+ (setq dashboard-items '((recents   . 5)
+                         (bookmarks . 5)
+                         (agenda    . 5)))
 
-  (setq dashboard-banner-logo-title "Behold; GNU/Emacs")
+ (undef-key! dashboard-mode-map [remap quit-window])
 
-  (setq dashboard-items '((recents   . 5)
-                          (bookmarks . 5)
-                          (agenda    . 5)))
+ (use-external-package!
+  evil-collection
+  :config
+  (evil-collection-init 'dashboard))
 
-  (undef-key! dashboard-mode-map
-    :with #'ignore
-    [remap quit-window])
-
-  (annt--evil-collection-init 'dashboard)
-
-  (defun-hook! annt--dashboard-as-initial-buffer ()
-    dashboard-mode-hook
-    "Sets the initial buffer to dashboard."
-    (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))))
+ (defun-hook! annt--dashboard-as-initial-buffer ()
+   dashboard-mode-hook
+   "Sets the initial buffer to dashboard."
+   (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))))
 #+end_src
 
 *** modeline
 
 #+begin_src emacs-lisp
 ;; clock
-(after! time
-  (setq display-time-format      "%a @ %H:%M")
-  (setq display-time-interval              50) ;; update faster to catch up
-  (setq display-time-default-load-average nil))
+(use-builtin-package!
+ time
+ :init
+ (add-hook 'emacs-startup-hook #'display-time-mode)
+ :config
+ (setq display-time-format      "%a @ %H:%M")
+ (setq display-time-interval              50) ;; update faster to catch up
+ (setq display-time-default-load-average nil))
 
-(add-hook 'after-init-hook #'display-time-mode)
-
-(setq column-number-mode   t)
-(setq size-indication-mode t)
-(setq column-number-indicator-zero-based nil)
+(use-builtin-package!
+ emacs
+ :config
+ (setq column-number-mode   t)
+ (setq size-indication-mode t)
+ (setq column-number-indicator-zero-based nil))
 #+end_src
 
 **** keycast
@@ -725,29 +798,29 @@ great and helps me identifying some muscle memory keys i usually press without
 notice.
 
 #+begin_src emacs-lisp
-(straight-use-package 'keycast)
+(use-external-package!
+ keycast
+ :init
+ (add-hook 'emacs-startup-hook #'keycast-mode)
+ :config
+ (setq keycast-mode-line-format "%k%c%r")
+ (setq keycast-tab-bar-format   "%k%c%r")
 
-(after! keycast
-  (setq keycast-mode-line-format "%k%c%r")
-  (setq keycast-tab-bar-format   "%k%c%r")
+ ;; don't hide rest of the modeline
+ (setq keycast-mode-line-remove-tail-elements nil)
 
-  ;; don't hide rest of the modeline
-  (setq keycast-mode-line-remove-tail-elements nil)
+ ;; disable logging when actually typing stuff
+ (dolist (ev '(self-insert-command
+               org-self-insert-command))
+   (add-to-list 'keycast-substitute-alist `(,ev "..." "Typing…")))
 
-  ;; disable logging when actually typing stuff
-  (dolist (ev '(self-insert-command
-                org-self-insert-command))
-    (add-to-list 'keycast-substitute-alist `(,ev "..." "Typing…")))
-
-  ;; list of events to ignore
-  (dolist (ev '(ignore
-                mouse-event-p
-                mouse-movement-p
-                mwheel-scroll
-                lsp-ui-doc--handle-mouse-movement))
-    (add-to-list 'keycast-substitute-alist `(,ev nil))))
-
-(add-hook 'after-init-hook #'keycast-mode)
+ ;; list of events to ignore
+ (dolist (ev '(ignore
+               mouse-event-p
+               mouse-movement-p
+               mwheel-scroll
+               lsp-ui-doc--handle-mouse-movement))
+   (add-to-list 'keycast-substitute-alist `(,ev nil))))
 #+end_src
 
 *** tooltips
@@ -755,11 +828,14 @@ notice.
 - GTK-tooltips disabled for consistency
 
 #+begin_src emacs-lisp
-(setq tooltip-short-delay         1)
-(setq x-gtk-use-system-tooltips nil)
-(setq tooltip-frame-parameters
-      '((border-width          . 0)
-        (internal-border-width . 4)))
+(use-builtin-package!
+ tooltip
+ :config
+ (setq x-gtk-use-system-tooltips nil)
+ (setq tooltip-short-delay         1)
+ (setq tooltip-frame-parameters
+       '((border-width          . 0)
+         (internal-border-width . 4))))
 #+end_src
 
 * dired
@@ -767,27 +843,32 @@ notice.
 /Emacs/' =dir=-ectory =ed=-itor.
 
 #+begin_src emacs-lisp
-(after! dired
-  (setq dired-auto-revert-buffer       #'dired-directory-changed-p)
-  (setq dired-listing-switches   "-AFhl --group-directories-first")
-  (setq dired-recursive-copies                             'always)
-  (setq dired-recursive-deletes                            'always)
+(use-builtin-package!
+ dired
+ :config
+ (setq dired-auto-revert-buffer       #'dired-directory-changed-p)
+ (setq dired-listing-switches   "-AFhl --group-directories-first")
+ (setq dired-recursive-copies                             'always)
+ (setq dired-recursive-deletes                            'always)
 
-  ;; disable some defaults
-  (undef-key! dired-mode-map
-    :with #'ignore
-    [mouse-1]
-    [mouse-2]
-    [normal-state mouse-2])
+ ;; disable some defaults
+ (undef-key! dired-mode-map
+   :with #'ignore
+   [mouse-1]
+   [mouse-2]
+   [normal-state mouse-2])
 
-  (def-key! dired-mode-map
-    [mouse-3] #'dired-mouse-find-file
-    [mouse-8] #'dired-up-directory)
+ (def-key! dired-mode-map
+   [mouse-3] #'dired-mouse-find-file
+   [mouse-8] #'dired-up-directory)
 
-  (annt--evil-collection-init 'dired) ;; vi binds
+ (use-external-package!
+  evil-collection
+  :config
+  (evil-collection-init 'dired))
 
-  ;; less verbose output
-  (add-hook 'dired-mode-hook #'dired-hide-details-mode))
+ ;; less verbose output
+ (add-hook 'dired-mode-hook #'dired-hide-details-mode))
 #+end_src
 
 | [[https://github.com/jtbm37/all-the-icons-dired][all-the-icons-dired]] | self-explanatory |
@@ -796,43 +877,46 @@ only enable /dired/ icons when using graphical /Emacs/.
 
 #+begin_src emacs-lisp
 (after-gui!
-  (after! dired
-    (straight-use-package 'all-the-icons-dired)
-    (add-hook 'dired-mode-hook #'all-the-icons-dired-mode))
-
-  (after! all-the-icons-dired (blackout 'all-the-icons-dired-mode)))
+  (use-external-package!
+   all-the-icons-dired
+   :after dired
+   :init
+   (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
+   :config
+   (blackout 'all-the-icons-dired-mode)))
 #+end_src
 
 * programming
-
 
 section dedicated to programming & programming languages specifically.
 
 | [[https://github.com/Malabarba/aggressive-indent-mode][aggressive-indent-mode]] | keeps your code nicely aligned when all you do is type |
 
 #+begin_src emacs-lisp
-(after! prog-mode
-  (straight-use-package 'aggressive-indent)
-  (add-hook 'prog-mode-hook #'aggressive-indent-mode))
+(use-external-package!
+ aggressive-indent
+ :after prog-mode
+ :init
+ (add-hook 'prog-mode-hook #'aggressive-indent-mode)
+ :config
+ (setq aggressive-indent-comments-too    t)
+ (setq aggressive-indent-sit-for-time 0.25)
 
-(after! aggressive-indent
-  (setq aggressive-indent-comments-too    t)
-  (setq aggressive-indent-sit-for-time 0.25)
-
-  (def-key! aggressive-indent-mode-map
-    "C-c C-q" #'aggressive-indent-indent-region-and-on))
+ (def-key! aggressive-indent-mode-map
+   "C-c C-q" #'aggressive-indent-indent-region-and-on))
 #+end_src
 
 | [[https://github.com/emacs-lsp/lsp-mode/][lsp-mode]] | Emacs client/library for the /Language Server Protocol (LSP)/ |
 
 #+begin_src emacs-lisp
-(after! prog-mode (straight-use-package 'lsp-mode))
-
-(after! lsp-mode
-  (setq lsp-keymap-prefix          "C-c l")
-  (setq lsp-lens-enable                  t)
-  (setq lsp-modeline-diagnostics-enable  t)
-  (setq lsp-headerline-breadcrumb-enable t))
+(use-external-package!
+ lsp-mode
+ :after prog-mode
+ :config
+ (setq lsp-keymap-prefix          "C-c l")
+ (setq lsp-lens-enable                  t)
+ (setq lsp-modeline-diagnostics-enable  t)
+ (setq lsp-headerline-breadcrumb-enable t))
 #+end_src
 
 ** Shell
@@ -840,17 +924,19 @@ section dedicated to programming & programming languages specifically.
 settings for shell scripts.
 
 #+begin_src emacs-lisp
-(after! sh-script
-  (setq sh-backlash-align t)
-  (setq sh-basic-offset   4)
+(use-builtin-package!
+ sh-script
+ :config
+ (setq sh-backlash-align t)
+ (setq sh-basic-offset   4)
 
-  ;; indentation
-  (setq sh-indent-for-case-alt      '+)
-  (setq sh-indent-for-case-label     0)
-  (setq sh-indent-after-continuation t)
+ ;; indentation
+ (setq sh-indent-for-case-alt      '+)
+ (setq sh-indent-for-case-label     0)
+ (setq sh-indent-after-continuation t)
 
-  ;; Flycheck
-  (add-hook 'sh-mode-hook #'flycheck-mode))
+ ;; Flycheck
+ (add-hook 'sh-mode-hook #'flycheck-mode))
 #+end_src
 
 ** Makefile
@@ -858,14 +944,16 @@ settings for shell scripts.
 =Makefile= files should follow the [[https://www.gnu.org/software/make/manual/html_node/Makefile-Conventions.html][GNU Makefile conventions]].
 
 #+begin_src emacs-lisp
-(after! make-mode
-  (setq makefile-backslash-align               t)
-  (setq makefile-tab-after-target-colon        t)
-  (setq makefile-use-curly-braces-for-macros-p t)
+(use-builtin-package!
+ make-mode
+ :config
+ (setq makefile-backslash-align               t)
+ (setq makefile-tab-after-target-colon        t)
+ (setq makefile-use-curly-braces-for-macros-p t)
 
-  ;; indentation
-  (setq indent-tabs-mode t) ;; use tabs over spaces
-  (setq tab-width        4))
+ ;; indentation
+ (setq-local indent-tabs-mode t) ;; use tabs over spaces
+ (setq tab-width 4))
 #+end_src
 
 ** C-like
@@ -877,45 +965,47 @@ programming languages that are syntactically similar to /C/.
 settings and style for the /C/ language.
 
 #+begin_src emacs-lisp
-(after! cc-mode
-  ;; OpenBSD KNF-style inherited from Kernighan & Ritchie
-  (setq c-auto-align-backslashes                t)
-  (setq c-backslash-max-column        fill-column)
-  (setq c-basic-offset                          4)
-  (setq c-electric-flag                         t)
-  (setq c-mark-wrong-style-of-comment           t)
-  (setq c-max-one-liner-length        fill-column)
-  (setq c-tab-always-indent                     t)
+(use-builtin-package!
+ cc-mode
+ :config
+ ;; OpenBSD KNF-style inherited from Kernighan & Ritchie
+ (setq c-auto-align-backslashes                t)
+ (setq c-backslash-max-column        fill-column)
+ (setq c-basic-offset                          4)
+ (setq c-electric-flag                         t)
+ (setq c-mark-wrong-style-of-comment           t)
+ (setq c-max-one-liner-length        fill-column)
+ (setq c-tab-always-indent                     t)
 
-  ;; offsets
-  (setq c-strict-syntax-p t) ;; we're serious in here
-  (setq c-offsets-alist
-        '((c                    . c-lineup-C-comments)
-          (block-close          . 0)
-          (block-open           . 0)
-          (case-label           . 0)
-          (defun-block-intro    . +)
-          (defun-close          . 0)
-          (defun-open           . 0)
-          (do-while-closure     . 0)
-          (else-clause          . 0)
-          (statement            . 0)
-          (statement-case-intro . +)
-          (statement-case-open  . +)))
+ ;; offsets
+ (setq c-strict-syntax-p t) ;; we're serious in here
+ (setq c-offsets-alist
+       '((c                    . c-lineup-C-comments)
+         (block-close          . 0)
+         (block-open           . 0)
+         (case-label           . 0)
+         (defun-block-intro    . +)
+         (defun-close          . 0)
+         (defun-open           . 0)
+         (do-while-closure     . 0)
+         (else-clause          . 0)
+         (statement            . 0)
+         (statement-case-intro . +)
+         (statement-case-open  . +)))
 
-  ;; braces
-  (setq c-hanging-braces-alist
-        '((defun-open  before after)
-          (defun-close before after)))
+ ;; braces
+ (setq c-hanging-braces-alist
+       '((defun-open  before after)
+         (defun-close before after)))
 
-  ;; Flycheck
-  (add-hook 'c-mode-hook #'flycheck-mode)
+ ;; Flycheck
+ (add-hook 'c-mode-hook #'flycheck-mode)
 
-  ;; LSP :: Clangd
-  (setq lsp-clients-clangd-args
-        '("--header-insertion-decorators=0"
-          "--clang-tidy"))
-  (add-hook 'c-mode-hook #'lsp-deferred))
+ ;; LSP :: Clangd
+ (setq lsp-clients-clangd-args
+       '("--header-insertion-decorators=0"
+         "--clang-tidy"))
+ (add-hook 'c-mode-hook #'lsp-deferred))
 #+end_src
 
 ** Lisp-like
@@ -923,34 +1013,37 @@ settings and style for the /C/ language.
 shared settings for Lisp-like programming languages.
 
 #+begin_src emacs-lisp
-(after! lisp-data-mode
-  ;; always be aggressive on Lisps
-  (add-hook 'lisp-data-mode-hook #'aggressive-indent-mode))
+(use-builtin-package!
+ lisp-mode
+ :config
+ (electric-pair-mode)
+ ;; always be aggressive on Lisps
+ (add-hook 'lisp-data-mode-hook #'aggressive-indent-mode))
 #+end_src
 
 *** Emacs Lisp (Elisp)
 
 #+begin_src emacs-lisp
-(after! elisp-mode
-  (electric-pair-mode)
-  (setq checkdoc-verb-check-experimental-flag nil)
-
-  ;; Flycheck
-  (setq flycheck-emacs-lisp-load-path 'inherit)
-
-  (add-hook 'emacs-lisp-mode-hook #'flycheck-mode))
+(use-builtin-package!
+ elisp-mode
+ :config
+ (setq checkdoc-verb-check-experimental-flag nil)
+ ;; Flycheck
+ (setq flycheck-emacs-lisp-load-path 'inherit)
+ (add-hook 'emacs-lisp-mode-hook #'flycheck-mode))
 #+end_src
 
 *** Common Lisp
 
 #+begin_src emacs-lisp
-(after! lisp-mode (straight-use-package 'sly))
-
-(after! sly
-  (setq sly-mrepl-history-file-name  "/tmp/.sly-mrepl-history")
-  (setq sly-enable-evaluate-in-emacs                       nil)
-  (setq sly-init-function                 'sly-init-using-asdf)
-  (setq inferior-lisp-program          (executable-find "sbcl")))
+(use-external-package!
+ sly
+ :after lisp-mode
+ :config
+ (setq sly-mrepl-history-file-name  "/tmp/.sly-mrepl-history")
+ (setq sly-enable-evaluate-in-emacs                       nil)
+ (setq sly-init-function                 'sly-init-using-asdf)
+ (setq inferior-lisp-program          (executable-find "sbcl")))
 #+end_src
 
 *** Racket
@@ -959,12 +1052,12 @@ shared settings for Lisp-like programming languages.
 (defun annt--racket-mode-setup ()
   "Sets up mode for Racket."
   (interactive)
-  (when (executable-find "racket")
-    (straight-use-package 'racket-mode)
-
-    (after! racket-mode
-      (add-hook 'racket-mode-hook #'flycheck-mode))
-    (racket-mode)))
+  (use-external-package!
+   racket-mode
+   :init
+   (racket-mode)
+   :config
+   (add-hook 'racket-mode-hook #'flycheck-mode)))
 
 (add-to-list 'auto-mode-alist '("\\.rkt[dl]?\\'" . annt--racket-mode-setup))
 #+end_src
@@ -975,9 +1068,10 @@ shared settings for Lisp-like programming languages.
 (defun annt--fennel-mode-setup ()
   "Sets up mode for Fennel."
   (interactive)
-  (when (executable-find "lua")
-    (straight-use-package 'fennel-mode)
-    (fennel-mode)))
+  (use-external-package!
+   fennel-mode
+   :init
+   (fennel-mode)))
 
 (add-to-list 'auto-mode-alist '("\\.fnl\\'" . annt--fennel-mode-setup))
 #+end_src
@@ -988,12 +1082,12 @@ shared settings for Lisp-like programming languages.
 (defun annt--nix-mode-setup ()
   "Sets up mode for Nix."
   (interactive)
-  (when (executable-find "nix")
-    (straight-use-package 'nix-mode)
-
-    (after! nix-mode
-      (add-hook 'nix-mode-hook #'lsp-deferred))
-    (nix-mode)))
+  (use-external-package!
+   nix-mode
+   :init
+   (nix-mode)
+   :config
+   (add-hook 'nix-mode-hook #'lsp-deferred)))
 
 (add-to-list 'auto-mode-alist '("\\.nix\\'" . annt--nix-mode-setup))
 #+end_src
@@ -1005,16 +1099,16 @@ shared settings for Lisp-like programming languages.
   "Sets up mode for Haskell."
   (interactive)
   ;; packages
-  (straight-use-package 'haskell-mode)
-  (straight-use-package 'hindent)
-  ;; LSP for Haskell's modes
-  ;; `lsp-haskell' is needed as an extra to `lsp-mode'
-  (straight-use-package 'lsp-haskell)
-  (add-hook! '(haskell-mode-hook haskell-literate-mode-hook) #'lsp-deferred)
-
-  ;; format before saving
-  (add-hook 'before-save-hook #'hindent-reformat-buffer)
-  (haskell-mode))
+  (use-external-package!
+   haskell-mode
+   :init
+   (haskell-mode)
+   :config
+   (straight-use-package hindent)
+   (straight-use-package lsp-haskell)
+   ;; format before saving
+   (add-hook 'before-save-hook #'hindent-reformat-buffer)
+   (add-hook! '(haskell-mode-hook haskell-literate-mode-hook) #'lsp-deferred)))
 
 (add-to-list 'auto-mode-alist '("\\.hs\\'" . annt--haskell-mode-setup))
 #+end_src
@@ -1027,12 +1121,13 @@ shared settings for Lisp-like programming languages.
 (defun annt--lua-mode-setup ()
   "Sets up mode for Lua."
   (interactive)
-  (straight-use-package 'lua-mode)
-
-  (after! lua-mode
-    (setq lua-indent-level 2)
-    (add-hook 'lua-mode-hook #'lsp-deferred))
-  (lua-mode))
+  (use-external-package!
+   lua-mode
+   :init
+   (lua-mode)
+   :config
+   (setq lua-indent-level 2)
+   (add-hook 'lua-mode-hook #'lsp-deferred)))
 
 (add-to-list 'auto-mode-alist '("\\.lua\\'" . annt--lua-mode-setup))
 #+end_src
@@ -1045,38 +1140,37 @@ shared settings for Lisp-like programming languages.
 (defun annt--yaml-mode-setup ()
   "Sets up mode for YAML."
   (interactive)
-  (straight-use-package 'yaml-mode)
-
-  (after! yaml-mode
-    (setq yaml-indent-offset 2))
-  (yaml-mode))
+  (use-external-package!
+   yaml-mode
+   :init
+   (yaml-mode)
+   :config
+   (setq yaml-indent-offset 2)))
 
 (add-to-list 'auto-mode-alist '("\\.ya?ml\\'" . annt--yaml-mode-setup))
 #+end_src
 
 ** Web
 
-#+begin_src shell
-(unless (executable-find "npm")
- (message
-  "npm is not installed (or not found), it may needed for extra functionality"))
-#+end_src
-
 *** HTML
 
 #+begin_src emacs-lisp
-(after! sgml-mode
-  (add-hook 'sgml-mode-hook #'sgml-electric-tag-pair-mode)
-  ;; LSP
-  (add-hook 'sgml-mode-hook #'lsp-deferred))
+(use-builtin-package!
+ sgml-mode
+ :config
+ (add-hook 'sgml-mode-hook #'sgml-electric-tag-pair-mode)
+ ;; LSP
+ (add-hook 'sgml-mode-hook #'lsp-deferred))
 #+end_src
 
 *** CSS
 
 #+begin_src emacs-lisp
-(after! css-mode
-  ;; LSP
-  (add-hook 'css-mode-hook #'lsp-deferred))
+(use-builtin-package!
+ css-mode
+ :config
+ ;; LSP
+ (add-hook 'css-mode-hook #'lsp-deferred))
 #+end_src
 
 *** Markdown
@@ -1085,34 +1179,35 @@ shared settings for Lisp-like programming languages.
 | [[https://github.com/ardumont/markdown-toc][markdown-toc]]  | TOC generator for Markdown files      |
 
 #+begin_src emacs-lisp
-(straight-use-package 'markdown-mode)
+(use-external-package!
+ markdown-mode
+ :config
+ ;; disabled to prevent changing other's file
+ (setq markdown-indent-on-enter nil)
+ (setq markdown-footnote-location 'header) ;; TODO :: test
+ (setq markdown-enable-html        t)
+ (setq markdown-enable-math        t)
+ (setq markdown-table-align-p      t)
+ (setq markdown-mouse-follow-link  t)
+ (setq markdown-list-indent-width  4)
+ (setq markdown-export-kill-buffer t)
+ (setq markdown-disable-tooltip-prompt nil)
+ (setq markdown-gfm-use-electric-backquote t)
+ (setq markdown-enable-highlighting-syntax t)
+ (setq markdown-live-preview-delete-export 'delete-on-destroy)
 
-(after! markdown-mode
-  ;; disabled to prevent changing other's file
-  (setq markdown-indent-on-enter nil)
-  (setq markdown-footnote-location 'header) ;; TODO :: test
-  (setq markdown-enable-html        t)
-  (setq markdown-enable-math        t)
-  (setq markdown-table-align-p      t)
-  (setq markdown-mouse-follow-link  t)
-  (setq markdown-list-indent-width  4)
-  (setq markdown-export-kill-buffer t)
-  (setq markdown-disable-tooltip-prompt nil)
-  (setq markdown-gfm-use-electric-backquote t)
-  (setq markdown-enable-highlighting-syntax t)
-  (setq markdown-live-preview-delete-export 'delete-on-destroy)
-
-  (add-hook 'markdown-mode-hook #'markdown-toc-mode)
-  ;; prefer GitHub-flavored MD for files named exactly 'README.md'
-  (add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode)))
+ (add-hook 'markdown-mode-hook #'markdown-toc-mode)
+ ;; prefer GitHub-flavored MD for files named exactly 'README.md'
+ (add-to-list 'auto-mode-alist '("README\\.md\\'" . gfm-mode)))
 
 ;; MD TOC
-(after! markdown-mode (straight-use-package 'markdown-toc))
-
-(after! markdown-toc
-  (setq markdown-toc-indentation-space  4)
-  (setq markdown-toc-list-item-marker "-")
-  (add-hook 'before-save-hook #'markdown-toc-generate-or-refresh-toc nil t))
+(use-external-package!
+ markdown-toc
+ :after markdown-mode
+ :config
+ (setq markdown-toc-indentation-space  4)
+ (setq markdown-toc-list-item-marker "-")
+ (add-hook 'before-save-hook #'markdown-toc-generate-or-refresh-toc nil t))
 #+end_src
 
 ** Assembly
@@ -1125,9 +1220,10 @@ shared settings for Lisp-like programming languages.
 (defun annt--mips-mode-setup ()
   "Sets up mode for MIPS Assembly."
   (interactive)
-  (straight-use-package 'mips-mode)
-
-  (mips-mode))
+  (use-external-package!
+   mips-mode
+   :init
+   (mips-mode)))
 
 (add-to-list 'auto-mode-alist '("\\.mips$" . annt--mips-mode-setup))
 #+end_src
@@ -1150,29 +1246,33 @@ in short, the /7 rules/ summarized:
 #+end_quote
 
 #+begin_src emacs-lisp
-(after! git-commit
-  (setq git-commit-summary-max-length 50)
-  (setq git-commit-style-convention-checks '(non-empty-second-line
-                                             overlong-summary-line))
-  ;; fill-column
-  (defun-hook! annt--set-git-fill-column ()
-    git-commit-mode-hook
-    "Updates the value of `fill-column' for git commit messages."
-    (setq-local fill-column 72)
-    (setq-local display-fill-column-indicator-column (+ fill-column 1))))
+(use-builtin-package!
+ git-commit
+ :config
+ (setq git-commit-summary-max-length 50)
+ (setq git-commit-style-convention-checks '(non-empty-second-line
+                                            overlong-summary-line))
+ ;; fill-column
+ (defun-hook! annt--set-git-fill-column ()
+   git-commit-mode-hook
+   "Updates the value of `fill-column' for git commit messages."
+   (setq-local fill-column 72)
+   (setq-local display-fill-column-indicator-column (+ fill-column 1))))
 #+end_src
 
 | [[https://github.com/magit/magit][magit]] | complete text-based user interface to [[https://git-scm.com/][Git]] |
 
 #+begin_src emacs-lisp
-(straight-use-package 'magit)
-
-(def-key! :prefix "C-c" "g" #'magit-status)
-
-(after! magit
-  ;; vi binds
-  (annt--evil-collection-init '((magit magit-repos magit-submodule)
-                          magit-section magit-todos)))
+(use-external-package!
+ magit
+ :init
+ (def-key! :prefix "C-c" "g" #'magit-status)
+ :config
+ (use-external-package!
+  evil-collection
+  :config
+  (evil-collection-init '((magit magit-repos magit-submodule)
+                          magit-section magit-todos))))
 #+end_src
 
 * applications & utilities
@@ -1180,71 +1280,79 @@ in short, the /7 rules/ summarized:
 | [[https://github.com/justbur/emacs-which-key][which-key]] | displays available keybindings in popup |
 
 #+begin_src emacs-lisp
-(straight-use-package 'which-key)
-
-(after! which-key
-  (setq which-key-lighter nil) ;; disable lighter on mode-line
-  (setq which-key-paging-key          "<next>")
-  (setq which-key-idle-delay               0.5)
-  (setq which-key-max-display-columns      nil)
-  (setq which-key-sort-order #'which-key-key-order-alpha))
-
-(which-key-mode)
+(use-external-package!
+ which-key
+ :init
+ (which-key-mode)
+ :config
+ (setq which-key-lighter nil) ;; disable lighter on mode-line
+ (setq which-key-paging-key          "<next>")
+ (setq which-key-idle-delay               0.5)
+ (setq which-key-max-display-columns      nil)
+ (setq which-key-sort-order #'which-key-key-order-alpha))
 #+end_src
 
 | [[https://github.com/Wilfred/helpful][helpful]] | better Emacs *help* buffer |
 
 #+begin_src emacs-lisp
-(straight-use-package 'helpful)
+(use-external-package!
+ helpful
+ :demand t
+ :config
+ (def-key!
+   [remap      describe-key] #'helpful-key
+   [remap   describe-symbol] #'helpful-symbol
+   [remap  describe-command] #'helpful-command
+   [remap describe-function] #'helpful-function
+   [remap describe-variable] #'helpful-variable)
 
-(def-key!
-  [remap      describe-key] #'helpful-key
-  [remap   describe-symbol] #'helpful-symbol
-  [remap  describe-command] #'helpful-command
-  [remap describe-function] #'helpful-function
-  [remap describe-variable] #'helpful-variable)
+ (def-key! 'helpful-mode-map
+   [remap quit-window] #'kill-buffer-and-window)
 
-(after! helpful
-  (def-key! 'helpful-mode-map
-    [remap quit-window] #'kill-buffer-and-window)
+ ;; help window position
+ (add-to-list 'display-buffer-alist '("\\*helpful.*\\*"
+                                      (display-buffer-in-side-window)
+                                      (window-width . 0.36)
+                                      (side         . right)
+                                      (slot         . 0)) t)
 
-  ;; help window position
-  (add-to-list 'display-buffer-alist '("\\*helpful.*\\*"
-                                       (display-buffer-in-side-window)
-                                       (window-width . 0.36)
-                                       (side         . right)
-                                       (slot         . 0)) t)
-
-  ;; vi binds
-  (annt--evil-collection-init 'helpful))
+ (use-external-package!
+  evil-collection
+  :config
+  (evil-collection-init 'helpful)))
 #+end_src
 
 | [[https://github.com/tarsius/hl-todo][hl-todo]] | TODO/FIXME/etc keyword highlighting in comments and strings |
 
 #+begin_src emacs-lisp
-(straight-use-package 'hl-todo)
-(add-hook! '(prog-mode-hook text-mode-hook) #'hl-todo-mode)
+(use-external-package!
+ hl-todo
+ :after (:or text-mode prog-mode)
+ :init
+ (add-hook! '(prog-mode-hook text-mode-hook) #'hl-todo-mode))
 #+end_src
 
 | [[https://github.com/Fanael/rainbow-delimiters][rainbow-delimiters]] | mode which highlights delimiters such as parentheses, brackets or braces according to their depth |
 
 #+begin_src emacs-lisp
-(after! prog-mode
-  (straight-use-package 'rainbow-delimiters)
-  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
+(use-external-package!
+ rainbow-delimiters
+ :init
+ (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
 #+end_src
 
 | [[https://github.com/malabarba/beacon][beacon]] | a flashing light that follows your cursor around so you don't lose it |
 
 #+begin_src emacs-lisp
-(straight-use-package 'beacon)
-(beacon-mode)
-
-(after! beacon
-  (setq beacon-lighter         nil)
-  (setq beacon-size    fill-column)
-  (setq beacon-blink-delay     0.5)
-  (setq beacon-blink-duration  0.5))
+(use-external-package!
+ beacon
+ :init
+ (beacon-mode)
+ :config
+ (setq beacon-lighter         nil)
+ (setq beacon-size    fill-column)
+ (setq beacon-blink-delay     0.5)
+ (setq beacon-blink-duration  0.5))
 #+end_src
 
 ** completion & extras
@@ -1252,118 +1360,125 @@ in short, the /7 rules/ summarized:
 | Abbreviations (Abbrevs) | built-in library for text abbreviations |
 
 #+begin_src emacs-lisp
-(after! abbrev
-  (setq only-global-abbrevs         nil)
-  (setq abbrev-all-caps               t)
-  (setq abbrev-suggest                t)
-  (setq save-abbrevs          'silently)
-  (setq abbrev-suggest-hint-threshold 3)
-  (setq abbrev-file-name (expand-file-name "abbrevs" user-emacs-directory))
+(use-builtin-package!
+ abbrev
+ :init
+ (add-hook 'text-mode-hook #'abbrev-mode)
+ :config
+ (setq only-global-abbrevs         nil)
+ (setq abbrev-all-caps               t)
+ (setq abbrev-suggest                t)
+ (setq save-abbrevs          'silently)
+ (setq abbrev-suggest-hint-threshold 3)
+ (setq abbrev-file-name (expand-file-name "abbrevs" user-emacs-directory))
 
-  ;; text-mode abbrevs
-  (let ((table text-mode-abbrev-table))
-    ;; Emacs-related
-    (define-abbrev table "emacs"   "Emacs")
-    (define-abbrev table "emacs27" "EmacsV27")
-    (define-abbrev table "emacs28" "EmacsV28")
-    (define-abbrev table "orgmode" "Org-Mode")
-    (define-abbrev table "melpa"   "MELPA")
+ ;; text-mode abbrevs
+ (let ((table text-mode-abbrev-table))
+   ;; Emacs-related
+   (define-abbrev table "emacs"   "Emacs")
+   (define-abbrev table "emacs27" "EmacsV27")
+   (define-abbrev table "emacs28" "EmacsV28")
+   (define-abbrev table "orgmode" "Org-Mode")
+   (define-abbrev table "melpa"   "MELPA")
 
-    ;; misc
-    (define-abbrev table "mymail" user-mail-address)
-    (define-abbrev table "ghub"   "GitHub")
-    (define-abbrev table "glab"   "GitLab")
-    (define-abbrev table "yt"     "YouTube")
+   ;; misc
+   (define-abbrev table "mymail" user-mail-address)
+   (define-abbrev table "ghub"   "GitHub")
+   (define-abbrev table "glab"   "GitLab")
+   (define-abbrev table "yt"     "YouTube")
 
-    ;; prog-languages & others
-    (define-abbrev table "cpp"       "C++")
-    (define-abbrev table "readme"    "README")
-    (define-abbrev table "latex"     "LaTeX")
-    (define-abbrev table "html"      "HTML")
-    (define-abbrev table "soyscript" "JavaScript"))
+   ;; prog-languages & others
+   (define-abbrev table "cpp"       "C++")
+   (define-abbrev table "readme"    "README")
+   (define-abbrev table "latex"     "LaTeX")
+   (define-abbrev table "html"      "HTML")
+   (define-abbrev table "soyscript" "JavaScript"))
 
-  ;; binds
-  (def-key! ctl-x-map
-    "a e" #'expand-abbrev
-    "a u" #'unexpand-abbrev)
+ ;; binds
+ (def-key! ctl-x-map
+   "a e" #'expand-abbrev
+   "a u" #'unexpand-abbrev)
 
-  ;; disable "Abbrev" lighter
-  (blackout 'abbrev-mode))
-
-(add-hook 'text-mode-hook #'abbrev-mode)
+ ;; disable "Abbrev" lighter
+ (blackout 'abbrev-mode))
 #+end_src
 
 | [[https://github.com/oantolin/orderless][orderless]] | completion style that is /order-less/ |
 
 #+begin_src emacs-lisp
-(straight-use-package 'orderless)
+(use-external-package!
+ orderless
+ :init
+ (setq orderless-matching-styles '(orderless-regexp orderless-literal)))
 
-(after! orderless
-  (setq orderless-matching-styles '(orderless-regexp orderless-literal)))
-
-(after! minibuffer
-  (setq completion-styles '(orderless))
-
-  ;; don't let SPC complete; '?' is for REGEXPs
-  (undef-key! minibuffer-local-completion-map "SPC" "?"))
+(use-builtin-package!
+ minibuffer
+ :config
+ (setq completion-styles '(orderless))
+ ;; don't let SPC complete; '?' is for REGEXPs
+ (undef-key! minibuffer-local-completion-map "SPC" "?"))
 #+end_src
 
 | [[https://github.com/minad/vertico][vertico]] | minimalistic completion UI, uses /Emacs/' own completion engine in contrast to other tools like [[https://github.com/abo-abo/swiper][ivy]] and [[https://github.com/emacs-helm/helm][helm]] |
 
 #+begin_src emacs-lisp
-(straight-use-package 'vertico)
-(vertico-mode)
+(use-external-package!
+ vertico
+ :init
+ (vertico-mode)
+ :config
+ (setq vertico-count 10)
+ (setq vertico-resize nil)
+ (setq vertico-scroll-margin (/ vertico-count 2))
+ (setq vertico-sort-function 'vertico-sort-history-length-alpha)
 
-(after! vertico
-  (setq vertico-count 10)
-  (setq vertico-resize nil)
-  (setq vertico-scroll-margin (/ vertico-count 2))
-  (setq vertico-sort-function 'vertico-sort-history-length-alpha)
-
-  (def-key! vertico-map
-    "C-j" #'vertico-next
-    "C-k" #'vertico-previous))
+ (def-key! vertico-map
+   "C-j" #'vertico-next
+   "C-k" #'vertico-previous))
 #+end_src
 
 | [[https://github.com/minad/marginalia][marginalia]] | annotations in the minibuffer |
 
 #+begin_src emacs-lisp
-(after! minibuffer
-  (straight-use-package 'marginalia)
-  (marginalia-mode))
-
-(after! marginalia
-  (setq marginalia-align    'left)
-  (setq marginalia-separator  nil)
-  (setq marginalia-field-width 80))
+(use-external-package!
+ marginalia
+ :init
+ (marginalia-mode)
+ :config
+ (setq marginalia-align    'left)
+ (setq marginalia-separator  nil)
+ (setq marginalia-field-width 80))
 #+end_src
 
 | [[https://github.com/company-mode/company-mode][company]] | text completion completion framework |
 
 #+begin_src emacs-lisp
-(after! prog-mode (straight-use-package 'company)
-  (add-hook 'prog-mode-hook #'company-mode))
+(use-external-package!
+ company
+ :after prog-mode
+ :init
+ (add-hook 'prog-mode-hook #'company-mode)
+ :config
+ (setq company-lighter-base      "Company")
+ (setq company-idle-delay             0.15)
+ (setq company-show-quick-access         t)
+ (setq company-tooltip-align-annotations t)
+ (setq company-minimum-prefix-length     1)
 
-(after! company
-  (setq company-lighter-base      "Company")
-  (setq company-idle-delay             0.15)
-  (setq company-show-quick-access         t)
-  (setq company-tooltip-align-annotations t)
-  (setq company-minimum-prefix-length     1)
-
-  (def-key! company-active-map
-    "C-j"   #'company-select-next
-    "C-k"   #'company-select-previous
-    "<tab>" #'company-complete-selection
-    "TAB"   #'company-complete-selection))
+ (def-key! company-active-map
+   "C-j"   #'company-select-next
+   "C-k"   #'company-select-previous
+   "<tab>" #'company-complete-selection
+   "TAB"   #'company-complete-selection))
 #+end_src
 
 | [[https://github.com/oantolin/embark][embark]] | perform actions on targets |
 
 #+begin_src emacs-lisp
-(straight-use-package 'embark)
-
-(def-key! "C-<escape>" #'embark-act)
+(use-external-package!
+ embark
+ :config
+ (def-key! "C-<escape>" #'embark-act))
 #+end_src
 
 *** syntax checking
@@ -1371,27 +1486,29 @@ in short, the /7 rules/ summarized:
 | [[https://github.com/flycheck/flycheck][flycheck]] | modern on-the-fly syntax checking |
 
 #+begin_src emacs-lisp
-(after! prog-mode (straight-use-package 'flycheck))
-
-(after! flycheck
-  (setq flycheck-mode-line-prefix                "FlyCheck")
-  (setq flycheck-display-errors-delay                   0.3)
-  (setq flycheck-idle-change-delay                      0.7)
-  (setq flycheck-buffer-switch-check-intermediate-buffers t))
+(use-external-package!
+ flycheck
+ :after prog-mode
+ :config
+ (setq flycheck-mode-line-prefix                "FlyCheck")
+ (setq flycheck-display-errors-delay                   0.3)
+ (setq flycheck-idle-change-delay                      0.7)
+ (setq flycheck-buffer-switch-check-intermediate-buffers t))
 #+end_src
 
 *** snippets
 
 #+begin_src emacs-lisp
-(after! (:or text-mode prog-mode)
-  (straight-use-package 'yasnippet)
-  (add-hook! '(prog-mode-hook text-mode-hook) #'yas-minor-mode))
-
-(after! yasnippet
-  (def-key! yas-minor-mode-map "C-<tab>" #'yas-expand)
-  (yas-reload-all)
-  ;; disable "yas" lighter
-  (blackout 'yas-minor-mode))
+(use-external-package!
+ yasnippet
+ :after (:or text-mode prog-mode)
+ :init
+ (add-hook! '(prog-mode-hook text-mode-hook) #'yas-minor-mode)
+ :config
+ (def-key! yas-minor-mode-map "C-<tab>" #'yas-expand)
+ (yas-reload-all)
+ ;; disable "yas" lighter
+ (blackout 'yas-minor-mode))
 #+end_src
 
 ** spelling
@@ -1401,22 +1518,24 @@ manage multiple dictionaries.  also still studying the different backend
 alternatives, those being =aspell=, =hunspell= & =enchant=.
 
 #+begin_src emacs-lisp
-(after! ispell
-  (let ((backend "aspell"))
-    (if (executable-find backend)
-        (setq ispell-program-name backend)
-      (annt--notify-and-log
-       "Dictionary backend not found; spell checking disabled.")))
+(use-builtin-package!
+ ispell
+ :config
+ (let ((backend "aspell"))
+   (if (executable-find backend)
+       (setq ispell-program-name backend)
+     (annt--notify-and-log
+      "Dictionary backend not found; spell checking disabled.")))
 
-  ;; dictionaries
-  (let ((dicts "en_GB"))
-    (setq ispell-dictionary dicts)
-    (setq ispell-local-dictionary dicts))
+ ;; dictionaries
+ (let ((dicts "en_GB"))
+   (setq ispell-dictionary dicts)
+   (setq ispell-local-dictionary dicts))
 
-  (setq ispell-check-comments  t)
-  (setq ispell-help-in-bufferp t)
-  (setq ispell-extra-args '("--sug-mode=ultra"
-                            "--run-together")))
+ (setq ispell-check-comments  t)
+ (setq ispell-help-in-bufferp t)
+ (setq ispell-extra-args '("--sug-mode=ultra"
+                           "--run-together")))
 #+end_src
 
 *** FlySpell
@@ -1425,31 +1544,33 @@ alternatives, those being =aspell=, =hunspell= & =enchant=.
 words.
 
 #+begin_src emacs-lisp
-(after! flyspell
-  (setq flyspell-issue-welcome-flag nil)
-  (setq flyspell-issue-message-flag nil)
-
-  (def-key! "M-\"" #'flyspell-buffer))
-
-(add-hook 'text-mode-hook #'flyspell-mode)
+(use-builtin-package!
+ flyspell
+ :init
+ (add-hook 'text-mode-hook #'flyspell-mode)
+ :config
+ (setq flyspell-issue-welcome-flag nil)
+ (setq flyspell-issue-message-flag nil)
+ (def-key! "M-\"" #'flyspell-buffer))
 #+end_src
 
 ** bookmarks
 
 #+begin_src emacs-lisp
-(after! bookmark
-  (setq bookmark-save-flag             nil)
-  (setq bookmark-sort-flag               t)
-  (setq bookmark-menu-length   fill-column)
-  (setq bookmark-search-delay          0.5)
-  (setq bookmark-use-annotations       nil)
-  (setq bookmark-set-fringe-mark         t)
-  (setq bookmark-version-control       nil)
-  (setq bookmark-watch-bookmark-file   nil)
-  (setq bookmark-menu-confirm-deletion   t)
-  (setq bookmark-completion-ignore-case  t)
-
-  (setq bookmark-default-file (expand-file-name "bookmarks" user-emacs-directory)))
+(use-builtin-package!
+ bookmark
+ :config
+ (setq bookmark-save-flag             nil)
+ (setq bookmark-sort-flag               t)
+ (setq bookmark-menu-length   fill-column)
+ (setq bookmark-search-delay          0.5)
+ (setq bookmark-use-annotations       nil)
+ (setq bookmark-set-fringe-mark         t)
+ (setq bookmark-version-control       nil)
+ (setq bookmark-watch-bookmark-file   nil)
+ (setq bookmark-menu-confirm-deletion   t)
+ (setq bookmark-completion-ignore-case  t)
+ (setq bookmark-default-file (expand-file-name "bookmarks" user-emacs-directory)))
 #+end_src
 
 the following snippet of code gets tangled into the =bookmarks= file, there's
@@ -1475,53 +1596,58 @@ no need to directly edit it; modify it below instead.
 one of /Emacs/' killer features.
 
 #+begin_src emacs-lisp
-(after! org
-  (setq org-edit-src-content-indentation 0)
-  (setq org-startup-folded               t)
-  (setq org-confirm-babel-evaluate     nil)
+(use-builtin-package!
+ org
+ :config
+ (setq org-startup-folded           t)
+ (setq org-confirm-babel-evaluate nil)
+ (setq org-edit-src-content-indentation 0)
 
-  ;; list of available exports
-  (setq org-export-backends '(ascii
-                              beamer
-                              groff
-                              html
-                              latex
-                              man
-                              md
-                              odt
-                              org
-                              texinfo))
+ ;; list of available exports
+ (setq org-export-backends '(ascii
+                             beamer
+                             groff
+                             html
+                             latex
+                             man
+                             md
+                             odt
+                             org
+                             texinfo))
 
-  (add-to-list 'display-buffer-alist '("\\*Org Src.*\\*"
-                                       (display-buffer-in-side-window)
-                                       (window-height . 0.3)
-                                       (side          . bottom)
-                                       (slot          . 0)) t)
+ ;; org-babel
+ (org-babel-do-load-languages
+  'org-babel-load-languages
+  '((emacs-lisp . t)
+    (shell      . t)))
 
-  (def-key! org-mode-map
-    "<tab>" #'org-cycle)
+ (add-to-list 'display-buffer-alist '("\\*Org Src.*\\*"
+                                      (display-buffer-in-side-window)
+                                      (window-height . 0.5)
+                                      (side          . bottom)
+                                      (slot          . 0)) t)
 
-  (add-hook 'org-mode-hook #'org-indent-mode))
+ (def-key! org-mode-map "<tab>" #'org-cycle))
 
-;; disable "Ind" lighter
-(after! org-indent (blackout 'org-indent-mode))
-
-;; org-babel
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((emacs-lisp . t)
-   (shell      . t)))
+(use-builtin-package!
+ org-indent
+ :after org
+ :init
+ (add-hook 'org-mode-hook #'org-indent-mode)
+ :config
+ (blackout 'org-indent-mode))
 #+end_src
 
 | [[https://github.com/snosov1/toc-org][toc-org]] | utility to have an up-to-date table of contents on ~Org~ and ~Markdown~ |
 
 #+begin_src emacs-lisp
-(after! org
-  (straight-use-package 'toc-org)
-  (add-hook 'org-mode-hook #'toc-org-mode))
-
-(after! toc-org
-  (setq toc-org-hrefify-default "gh"))
+(use-external-package!
+ toc-org
+ :after org
+ :init
+ (add-hook 'org-mode-hook #'toc-org-mode)
+ :config
+ (setq toc-org-hrefify-default "gh"))
 #+end_src
 
 | [[https://github.com/takaxp/org-tree-slide][org-tree-slide]] | allows creating presentations with /Org-Mode/ |
@@ -1530,40 +1656,41 @@ one of /Emacs/' killer features.
   - [[https://youtu.be/vz9aLmxYJB0][Emacs Tips - How to Give Presentations with Org Mode]]
 
 #+begin_src emacs-lisp
-(after! org (straight-use-package 'org-tree-slide))
+(use-external-package!
+ org-tree-slide
+ :after org
+ :config
+ (defun-hook! annt--org-present-start ()
+   org-tree-slide-play-hook
+   "Configurations settings for entering presentation mode."
+   (interactive)
+   ;; save current settings
+   (setq-local display-line-numbers-orig display-line-numbers)
 
-(after! org-tree-slide
-  (defun-hook! annt--org-present-start ()
-    org-tree-slide-play-hook
-    "Configurations settings for entering presentation mode."
-    (interactive)
-    ;; save current settings
-    (setq-local display-line-numbers-orig display-line-numbers)
+   ;; set new values
+   (setq-local text-scale-mode-amount 3)
+   (setq-local display-line-numbers nil)
+   (org-display-inline-images) ;; enable images for org
+   (display-fill-column-indicator-mode 0)
+   (text-scale-set text-scale-mode-amount))
 
-    ;; set new values
-    (setq-local text-scale-mode-amount 3)
-    (setq-local display-line-numbers nil)
-    (org-display-inline-images) ;; enable images for org
-    (display-fill-column-indicator-mode 0)
-    (text-scale-set text-scale-mode-amount))
-
-  (defun-hook! annt--org-present-end ()
-    org-tree-slide-stop-hook
-    "Configurations settings for exiting presentation mode, reverting changes
+ (defun-hook! annt--org-present-end ()
+   org-tree-slide-stop-hook
+   "Configurations settings for exiting presentation mode, reverting changes
 mostly."
-    (interactive)
-    ;; restore settings
-    (setq-local text-scale-mode-amount 0)
-    (setq display-line-numbers display-line-numbers-orig)
-    (text-scale-set text-scale-mode-amount)
-    (display-fill-column-indicator-mode))
+   (interactive)
+   ;; restore settings
+   (setq-local text-scale-mode-amount 0)
+   (setq display-line-numbers display-line-numbers-orig)
+   (text-scale-set text-scale-mode-amount)
+   (display-fill-column-indicator-mode))
 
-  (setq org-tree-slide-activate-message    "Presentation ON")
-  (setq org-tree-slide-deactivate-message "Presentation OFF")
-  (setq org-image-actual-width nil)
+ (setq org-tree-slide-activate-message    "Presentation ON")
+ (setq org-tree-slide-deactivate-message "Presentation OFF")
+ (setq org-image-actual-width nil)
 
-  ;; keybinds
-  (def-key! org-mode-map :prefix "C-c" "<f9>" #'org-tree-slide-mode))
+ ;; keybinds
+ (def-key! org-mode-map :prefix "C-c" "<f9>" #'org-tree-slide-mode))
 #+end_src
 
 *** LaTeX
@@ -1584,16 +1711,19 @@ file using /LaTeX/ without the previously mentioned tools will result in
 errors.
 
 #+begin_src emacs-lisp
-(after! (org ox-latex)
-  (setq org-latex-classes
-        '(("article"
-           "\\documentclass{article} [NO-DEFAULT-PACKAGES] [PACKAGES] [EXTRA]"
-           ("\\section{%s}"       . "\\section*{%s}")
-           ("\\subsection{%s}"    . "\\subsection*{%s}")
-           ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
-           ("\\paragraph{%s}"     . "\\paragraph*{%s}")
-           ("\\subparagraph{%s}"  . "\\subparagraph*{%s}"))))
-  (setq org-latex-compiler "xelatex"))
+(use-builtin-package!
+ ox-latex
+ :after org
+ :config
+ (setq org-latex-classes
+       '(("article"
+          "\\documentclass{article} [NO-DEFAULT-PACKAGES] [PACKAGES] [EXTRA]"
+          ("\\section{%s}"       . "\\section*{%s}")
+          ("\\subsection{%s}"    . "\\subsection*{%s}")
+          ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+          ("\\paragraph{%s}"     . "\\paragraph*{%s}")
+          ("\\subparagraph{%s}"  . "\\subparagraph*{%s}"))))
+ (setq org-latex-compiler "xelatex"))
 #+end_src
 
 ***  setup files
