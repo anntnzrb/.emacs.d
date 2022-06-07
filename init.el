@@ -40,17 +40,7 @@
 (dolist (path '("lisp"))
   (add-to-list 'load-path (locate-user-emacs-file path)))
 
-;; WARNING: Reset garbage collector (should be at the end of this file)
-;; After everything else is set-up, set the garbage collector to a considerable
-;; non-archaic value.
-(defun swc-init--setup-gc ()
-  "Sets up efficient garbage collector settings.
-The following values are modified: `gc-cons-threshold' and
-`gc-cons-percentage'
-
-NOTE: Garbage collector was also previously modified at 'early-init.el'."
-  (setq gc-cons-threshold (* 20 1024 1024))
-  (setq gc-cons-percentage 0.1))
+;;; Function definitions
 
 (defun swc-init--debug-init()
   "Displays information related to initialization."
@@ -131,7 +121,7 @@ This step should be done after tangling & byte-compiling."
     (load file-el nil 'nomessage 'nosuffix)
     (swisschamp--notify-and-log "Swisschamp configuration loaded.")))
 
-;;; Apply everything
+;;; Function definitions end here
 
 ;; a few settings...
 (setq frame-title-format
@@ -140,8 +130,7 @@ This step should be done after tangling & byte-compiling."
 ;; set working directory to '~/' regardless of where Emacs was started from
 (cd (expand-file-name "~/"))
 
-(add-hook 'emacs-startup-hook #'swc-init--setup-gc)
-(add-hook 'emacs-startup-hook #'swc-init--debug-init)
+(add-hook 'emacs-startup-hook #'swc-init--debug-init t)
 
 ;; set to both hooks to ensure config is always updated and byte-compiled, for
 ;; startup times it's possible to only keep `kill-emacs-hook'.

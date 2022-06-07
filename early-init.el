@@ -35,6 +35,57 @@
 
 ;;; Code:
 
+;;; Optimization tweaks
+
+;; Increase the amount of data which Emacs reads from processes
+(setq read-process-output-max (expt 2 24))
+
+;; misc
+(setq auto-window-vscroll nil)
+(setq message-log-max (expt 2 14))
+
+;; The garbage collector threshold is increased here to prevent it from running
+;; at these early stages, the objective here is to "disable" it temporarily and
+;; later on re-configure it.
+;; In easy words: `gc-cons-threshold' is set to `most-positive-fixnum' so the
+;; this amount is "never" reached, therefore there is no garbage collection.
+;; NOTE :: Improper adjustment of these settings may lead to freezes/stuttering
+;; and unexpected behaviour.
+(setq gc-cons-threshold most-positive-fixnum)
+(setq gc-cons-percentage 0.6)
+
+;; `file-name-handler-alist' is consulted on each `require' and `load', it is
+;; possible to `nil' for performance gains; should be reset after initialization.
+(defconst FILE-NAME-HANDLER-ALIST-BAK file-name-handler-alist)
+(setq file-name-handler-alist nil)
+
+;; finally, restore or set appropiate values for the modified symbols and
+;; perform a garbage collection at the end once the configuration is done
+;; setting up.
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (setq file-name-handler-alist FILE-NAME-HANDLER-ALIST-BAK)
+            (setq gc-cons-threshold (* 20 1024 1024))
+            (setq gc-cons-percentage 0.1)
+            (makunbound 'file-name-handler-alist-bak)
+            (garbage-collect)) t)
+
+;;; Optimization tweaks end here
+
+;;; Native Compilation
+
+;; > EmacsV28+
+(if (and (fboundp 'native-comp-available-p)
+         (native-comp-available-p))
+    (progn
+      (message "Native compilation is available.")
+      (setq native-comp-async-report-warnings-errors 'silent)
+      ;; Prevent unwanted runtime compilation
+      (setq native-comp-deferred-compilation nil))
+  (message "Native compilation is NOT available."))
+
+;;; Native Compilation ends here
+
 ;; explicitely set Emacs' directory for this profile
 (setq user-emacs-directory
       (file-name-as-directory
@@ -46,29 +97,6 @@
   (when (version< emacs-version min-ver)
     (error "Your version of GNU Emacs v%s is outdated, you need at least v%s"
            emacs-version min-ver)))
-
-;; The garbage collector threshold is increased here to prevent it from
-;; running at these early stages, the objective here is to reset it later.
-;; Consider checking the 'init.el' file right next to this file for the
-;; remaining instructions.
-;; WARNING :: Improper adjustment of these settings properly may lead to
-;; freezes/stuttering and unexpected behaviour.
-(setq gc-cons-threshold most-positive-fixnum)
-(setq gc-cons-percentage 0.6)
-
-;; Increase the amount of data which Emacs reads from processes
-(setq read-process-output-max (* 1024 1024))
-
-;; Native Compilation
-;; > EmacsV28+
-(if (and (fboundp 'native-comp-available-p)
-         (native-comp-available-p))
-    (progn
-      (message "Native compilation is available.")
-      (setq native-comp-async-report-warnings-errors 'silent)
-      ;; Prevent unwanted runtime compilation
-      (setq native-comp-deferred-compilation nil))
-  (message "Native compilation is NOT available."))
 
 ;; package tweaks
 (setq package-enable-at-startup nil) ;; needed by `straight.el'
