@@ -59,6 +59,13 @@
 (defconst FILE-NAME-HANDLER-ALIST-BAK file-name-handler-alist)
 (setq file-name-handler-alist nil)
 
+;; disable redisplay as it is not really needed, enable afterwards.
+(setq inhibit-redisplay t)
+(add-hook 'window-setup-hook
+          (lambda ()
+            (setq inhibit-redisplay nil)
+            (redisplay)))
+
 ;; finally, restore or set appropiate values for the modified symbols and
 ;; perform a garbage collection at the end once the configuration is done
 ;; setting up.
