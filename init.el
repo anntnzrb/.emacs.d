@@ -33,7 +33,7 @@
 
 ;;; Code:
 
-(defconst swisschamp--file "swisschamp"
+(defconst SWISSCHAMP--FILE "swisschamp"
   "Base name of Swisschamp's configuration file.")
 
 ;; Add extra paths, 'lisp/' contains core & helper definitions.
@@ -100,7 +100,7 @@ The Org file is compared with the tangled '.el' file; if the latter is older
 than the Org file, delete the '.el' file code and re-tangle it, byte-compile it
 afterwards."
   (interactive)
-  (let* ((file swisschamp--file)
+  (let* ((file SWISSCHAMP--FILE)
          (file-org (swc-init--expand-file-name file ".org"))
          (file-el  (swc-init--expand-file-name file ".el"))
          (file-elc (swc-init--expand-file-name file ".elc")))
@@ -116,7 +116,7 @@ afterwards."
 (defun swc-init--load-file ()
   "Load the configuration file.
 This step should be done after tangling & byte-compiling."
-  (let* ((file swisschamp--file)
+  (let* ((file SWISSCHAMP--FILE)
          (file-org (swc-init--expand-file-name file ".org"))
          (file-el  (swc-init--expand-file-name file ".el")))
 
