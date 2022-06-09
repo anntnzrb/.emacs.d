@@ -1487,6 +1487,7 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (use-external-package!
  embark
+ :defer 2
  :config
  (def-key! "C-<escape>" #'embark-act))
 #+end_src
