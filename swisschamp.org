@@ -304,9 +304,10 @@ settings that do not belong anywhere specific.
 (use-builtin-package!
  autorevert
  :defer 2
+ :init
+ (add-hook 'emacs-startup-hook #'global-auto-revert-mode)
  :config
- (setq auto-revert-verbose t)
- (add-hook 'emacs-startup-hook #'global-auto-revert-mode))
+ (setq auto-revert-verbose t))
 
 ;; performance improvement for really long files
 (use-builtin-package!
