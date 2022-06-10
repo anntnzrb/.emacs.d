@@ -1289,7 +1289,7 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (use-external-package!
  which-key
- :defer 5
+ :defer 2
  :config
  (setq which-key-lighter nil) ;; disable lighter on mode-line
  (setq which-key-paging-key          "<next>")
