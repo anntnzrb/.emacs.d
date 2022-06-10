@@ -1616,7 +1616,8 @@ one of /Emacs/' killer features.
 (use-builtin-package!
  org
  :config
- (setq org-startup-folded           t)
+ (setq org-startup-folded t)
+ (setq org-src-fontify-natively t)
  (setq org-confirm-babel-evaluate nil)
  (setq org-edit-src-content-indentation 0)
 
@@ -1732,6 +1733,19 @@ errors.
  ox-latex
  :after org
  :config
+ ;; ensure this are always the default packages
+ (setq org-latex-default-packages-alist
+       '(("AUTO"     "inputenc"  t    ("pdflatex"))
+         ("T1"       "fontenc"   t    ("pdflatex"))
+         (""         "graphicx"  t)
+         (""         "longtable" nil)
+         (""         "wrapfig"   nil)
+         (""         "rotating"  nil)
+         ("normalem" "ulem"      t)
+         (""         "amsmath"   t)
+         (""         "amssymb"   t)
+         (""         "capt-of"   nil)
+         (""         "hyperref"  nil)))
  (setq org-latex-classes
        '(("article"
           "\\documentclass{article} [NO-DEFAULT-PACKAGES] [PACKAGES] [EXTRA]"
