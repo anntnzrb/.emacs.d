@@ -1007,7 +1007,8 @@ settings and style for the /C/ language.
  ;; Flycheck
  (add-hook 'c-mode-hook #'flycheck-mode)
 
- ;; LSP :: Clangd
+ ;; LSP :: clangd
+ (setq lsp-clangd-binary-path (executable-find "clangd"))
  (setq lsp-clients-clangd-args
        '("--header-insertion-decorators=0"
          "--clang-tidy"))
