@@ -804,7 +804,8 @@ notice.
 #+begin_src emacs-lisp
 (use-external-package!
  keycast
- :defer 2
+ :init
+ (add-hook 'emacs-startup-hook #'keycast-mode)
  :config
  (setq keycast-mode-line-format "%k%c%r")
  (setq keycast-tab-bar-format   "%k%c%r")
@@ -823,9 +824,7 @@ notice.
                mouse-movement-p
                mwheel-scroll
                lsp-ui-doc--handle-mouse-movement))
-   (add-to-list 'keycast-substitute-alist `(,ev nil)))
-
- (add-hook 'emacs-startup-hook #'keycast-mode))
+   (add-to-list 'keycast-substitute-alist `(,ev nil))))
 #+end_src
 
 *** tooltips
@@ -1453,7 +1452,7 @@ in short, the /7 rules/ summarized:
 #+begin_src emacs-lisp
 (use-external-package!
  marginalia
- :defer 2
+ :defer 1
  :config
  (setq marginalia-align    'left)
  (setq marginalia-separator  nil)
