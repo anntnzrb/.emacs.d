@@ -1366,6 +1366,16 @@ in short, the /7 rules/ summarized:
  (beacon-mode))
 #+end_src
 
+| [[https://github.com/purcell/envrc][envrc]] | support for ~direnv~ which operates buffer-locally |
+
+#+begin_src emacs-lisp
+(use-external-package!
+ envrc
+ :when (executable-find "direnv")
+ :init
+ (add-hook 'prog-mode-hook #'envrc-global-mode))
+#+end_src
+
 ** completion & extras
 
 | Abbreviations (Abbrevs) | built-in library for text abbreviations |
