@@ -850,10 +850,12 @@ notice.
 (use-builtin-package!
  dired
  :config
- (setq dired-auto-revert-buffer       #'dired-directory-changed-p)
- (setq dired-listing-switches   "-AFhl --group-directories-first")
- (setq dired-recursive-copies                             'always)
- (setq dired-recursive-deletes                            'always)
+ (setq dired-hide-details-hide-symlink-targets nil)
+ (setq dired-auto-revert-buffer #'dired-buffer-stale-p)
+ (setq dired-recursive-copies  'always)
+ (setq dired-recursive-deletes 'top)
+ (setq dired-listing-switches "-AFhl --group-directories-first")
+ (setq dired-dwim-target t)
 
  ;; disable some defaults
  (undef-key! dired-mode-map
