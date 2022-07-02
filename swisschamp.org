@@ -524,6 +524,18 @@ however, if set properly this can be a catastrophe saver.
  (add-hook 'before-save-hook #'whitespace-cleanup))
 #+end_src
 
+| [[https://github.com/spudlyo/clipetty][clipetty]] | system clipboard integration for TTY |
+
+#+begin_src emacs-lisp
+(unless (display-graphic-p)
+  (use-external-package!
+   xclip
+   :init (add-hook 'emacs-startup-hook #'xclip-mode)
+   :config
+   (setq xclip-program "xclip")
+   (setq xclip-select-enable-clipboard t)))
+#+end_src
+
 *** Vi emulation
 
 my journey on /*nix/ environments began with /[neo]Vi[m]/, it's difficult for
