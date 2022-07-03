@@ -1159,6 +1159,19 @@ shared settings for Lisp-like programming languages.
   (add-hook 'css-mode-hook #'lsp-deferred))
   #+end_src
 
+*** JavaScript
+
+#+begin_src emacs-lisp
+(use-builtin-package! js
+  :config
+  (setq js-chain-indent t)
+  (setq js-indent-level 2)
+  (setq js-indent-align-list-continuation t)
+
+  ;; LSP
+  (add-hook 'js-mode-hook #'eglot-ensure))
+#+end_src
+
 *** Markdown
 
 | [[https://github.com/jrblevin/markdown-mode][markdown-mode]] | major mode for editing Markdown files |
