@@ -57,6 +57,8 @@
   - [[#web][Web]]
     - [[#html][HTML]]
     - [[#css][CSS]]
+    - [[#javascript][JavaScript]]
+    - [[#typescript][TypeScript]]
     - [[#markdown][Markdown]]
   - [[#assembly][Assembly]]
     - [[#mips][MIPS]]
@@ -1170,6 +1172,17 @@ shared settings for Lisp-like programming languages.
 
   ;; LSP
   (add-hook 'js-mode-hook #'eglot-ensure))
+#+end_src
+
+*** TypeScript
+
+| [[https://github.com/emacs-typescript/typescript.el][typescript.el]] |
+
+#+begin_src emacs-lisp
+(use-external-package! typescript-mode
+  :after prog-mode
+  :config
+  (add-hook 'typescript-mode-hook #'eglot-ensure))
 #+end_src
 
 *** Markdown
