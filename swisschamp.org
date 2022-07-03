@@ -902,6 +902,22 @@ section dedicated to programming & programming languages specifically.
   (setq lsp-headerline-breadcrumb-enable t))
   #+end_src
 
+| [[https://github.com/joaotavora/eglot][eglot]] | LSP Client aimed to be lighter than =lsp-mode= |
+
+#+begin_src emacs-lisp
+(use-external-package! eglot
+  :after prog-mode
+  :config
+  (def-key! :prefix "C-c c"
+    "R" #'eglot-reconnect
+    "r" #'eglot-rename
+    "a" #'eglot-code-actions
+    "f" #'eglot-format-buffer
+    "F" #'eglot-format
+    "h" #'eldoc
+    "x" #'xref-find-definitions))
+#+end_src
+
 ** Shell
 
 settings for shell scripts.
@@ -1260,7 +1276,7 @@ correct git commit messages."
 
 #+begin_src emacs-lisp
 (use-external-package! helpful
-  :defer 10
+  :defer 2
   :config
   (def-key!
     [remap      describe-key] #'helpful-key
