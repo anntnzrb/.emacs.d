@@ -580,6 +580,22 @@ me not to seek for /Vi/ emulation everywhere.
   (global-evil-surround-mode))
   #+end_src
 
+  | [[https://github.com/edkolev/evil-goggles/][evil-goggles]] | visual hints for vi operations |
+
+#+begin_src emacs-lisp
+(use-external-package! evil-goggles
+  :after evil
+  :defer 2
+  :config
+  (setq evil-goggles-pulse nil)
+  (setq evil-goggles-pulse 'display-graphic-p)
+  (setq evil-goggles-lighter nil)
+  (setq evil-goggles-duration 0.1)
+  (setq evil-goggles-async-duration nil)
+  (setq evil-goggles-blocking-duration nil)
+  (evil-goggles-mode))
+  #+end_src
+
 *** mouse & cursor
 
 mouse & mouse wheel behaviour.
