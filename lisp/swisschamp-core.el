@@ -78,6 +78,7 @@ This is a wrapper around `eval-after-load' that:
 
 (defmacro swc-core--with-featurep (feature &rest body)
   "Eval BODY if FEATURE is present."
+  (declare (indent 2))
   `(when (featurep ,feature) ,@body))
 
 (defalias 'featurep! #'swc-core--with-featurep)
