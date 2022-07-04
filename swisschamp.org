@@ -1176,7 +1176,7 @@ shared settings for Lisp-like programming languages.
   :config
   (add-hook 'sgml-mode-hook #'sgml-electric-tag-pair-mode)
   ;; LSP
-  (add-hook 'sgml-mode-hook #'lsp-deferred))
+  (add-hook 'sgml-mode-hook #'eglot-ensure))
   #+end_src
 
 *** CSS
@@ -1185,7 +1185,7 @@ shared settings for Lisp-like programming languages.
 (use-builtin-package! css-mode
   :config
   ;; LSP
-  (add-hook 'css-mode-hook #'lsp-deferred))
+  (add-hook 'css-mode-hook #'eglot-ensure))
   #+end_src
 
 *** JavaScript
