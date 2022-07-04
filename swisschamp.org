@@ -35,7 +35,7 @@
     - [[#binds][binds]]
   - [[#appearance][appearance]]
     - [[#fonts][fonts]]
-    - [[#themes][themes]]
+    - [[#themes-icons--extras][themes, icons & extras]]
     - [[#dashboard][dashboard]]
     - [[#modeline][modeline]]
     - [[#tooltips][tooltips]]
@@ -695,7 +695,7 @@ under its respective =mode-map=-ing.
                           :font (format "FantasqueSansMono-%s" font-size)))))
 #+end_src
 
-*** themes
+*** themes, icons & extras
 
 | [[https://gitlab.com/protesilaos/modus-themes/][modus-themes]] | pair of highly accessible themes that conform with the WCAG AAA standard for colour contrast between background and foreground combinations |
 
@@ -740,6 +740,17 @@ testing for now...
       (unless (file-exists-p (expand-file-name
                               "~/.local/share/fonts/all-the-icons.ttf"))
         (all-the-icons-install-fonts t)))))
+#+end_src
+
+| [[https://github.com/iyefrat/all-the-icons-completion][all-the-icons-completion]] | icons for completion candidates |
+
+#+begin_src emacs-lisp
+(after-gui!
+  (use-external-package! all-the-icons-completion
+    :after all-the-icons
+    :defer 2
+    :config
+    (all-the-icons-completion-mode)))
 #+end_src
 
 *** dashboard
@@ -881,7 +892,7 @@ only enable /dired/ icons when using graphical /Emacs/.
 #+begin_src emacs-lisp
 (after-gui!
   (use-external-package! all-the-icons-dired
-    :after dired
+    :after (all-the-icons dired)
     :init
     (add-hook 'dired-mode-hook #'all-the-icons-dired-mode)
     :config
@@ -1472,7 +1483,11 @@ correct git commit messages."
   (setq marginalia-align    'left)
   (setq marginalia-separator  nil)
   (setq marginalia-field-width 80)
-  (marginalia-mode))
+
+  (marginalia-mode)
+
+  (featurep! 'all-the-icons-completion
+      (add-hook 'marginalia-mode-hook #'all-the-icons-completion-marginalia-setup)))
   #+end_src
 
 | [[https://github.com/company-mode/company-mode][company]] | text completion completion framework |
