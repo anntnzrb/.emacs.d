@@ -1342,7 +1342,7 @@ correct git commit messages."
 
 #+begin_src emacs-lisp
 (use-external-package! helpful
-  :defer 2
+  :defer 4
   :config
   (def-key!
     [remap      describe-key] #'helpful-key
