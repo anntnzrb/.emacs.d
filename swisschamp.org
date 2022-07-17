@@ -963,8 +963,8 @@ settings for shell scripts.
   (setq sh-indent-for-case-label     0)
   (setq sh-indent-after-continuation t)
 
-  ;; Flycheck
-  (add-hook 'sh-mode-hook #'flycheck-mode))
+  ;; LSP
+  (add-hook 'sh-mode-hook #'eglot-ensure))
   #+end_src
 
 ** Makefile
