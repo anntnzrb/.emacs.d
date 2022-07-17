@@ -53,6 +53,7 @@
   - [[#nix][Nix]]
   - [[#haskell][Haskell]]
   - [[#lua][Lua]]
+  - [[#nim][Nim]]
   - [[#yaml][YAML]]
   - [[#web][Web]]
     - [[#html][HTML]]
@@ -1148,6 +1149,18 @@ shared settings for Lisp-like programming languages.
     (add-hook 'lua-mode-hook #'lsp-deferred)))
 
 (add-to-list 'auto-mode-alist '("\\.lua\\'" . annt--lua-mode-setup))
+#+end_src
+
+** Nim
+
+#+begin_src emacs-lisp
+(use-external-package! nim-mode
+  :mode "\\.nim\\'"
+  :config
+  (require 'eglot)
+  (add-hook! 'nim-mode-hook (list #'eglot-ensure
+                                  #'company-mode))
+  (add-to-list 'eglot-server-programs '(nim-mode . ("nimlsp"))))
 #+end_src
 
 ** YAML
