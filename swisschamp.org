@@ -989,50 +989,16 @@ programming languages that are syntactically similar to /C/.
 
 *** C
 
-settings and style for the /C/ language.
+common settings for both ~C~ and ~C++~; the latter should inherit from the
+former.
 
 #+begin_src emacs-lisp
 (use-builtin-package! cc-mode
   :config
-  ;; OpenBSD KNF-style inherited from Kernighan & Ritchie
-  (setq c-auto-align-backslashes                t)
-  (setq c-backslash-max-column        fill-column)
-  (setq c-basic-offset                          4)
-  (setq c-electric-flag                         t)
-  (setq c-mark-wrong-style-of-comment           t)
-  (setq c-max-one-liner-length        fill-column)
-  (setq c-tab-always-indent                     t)
+  (setq c-basic-offset 4)
 
-  ;; offsets
-  (setq c-strict-syntax-p t) ;; we're serious in here
-  (setq c-offsets-alist
-        '((c                    . c-lineup-C-comments)
-          (block-close          . 0)
-          (block-open           . 0)
-          (case-label           . 0)
-          (defun-block-intro    . +)
-          (defun-close          . 0)
-          (defun-open           . 0)
-          (do-while-closure     . 0)
-          (else-clause          . 0)
-          (statement            . 0)
-          (statement-case-intro . +)
-          (statement-case-open  . +)))
-
-  ;; braces
-  (setq c-hanging-braces-alist
-        '((defun-open  before after)
-          (defun-close before after)))
-
-  ;; Flycheck
-  (add-hook 'c-mode-hook #'flycheck-mode)
-
-  ;; LSP :: clangd
-  (setq lsp-clangd-binary-path (executable-find "clangd"))
-  (setq lsp-clients-clangd-args
-        '("--header-insertion-decorators=0"
-          "--clang-tidy"))
-  (add-hook 'c-mode-hook #'lsp-deferred))
+  (add-hook! '(c-mode-hook c++-mode-hook) (list #'eglot-ensure
+                                                #'company-mode)))
   #+end_src
 
 ** Lisp-like
