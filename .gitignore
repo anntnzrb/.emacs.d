@@ -1,11 +1,11 @@
 # ignore everything except for self and a few files
 /*
 !.gitignore
-!COPYING
 
+!/lib
 !/lisp
 !/snippets
 
+!COPYING
 !early-init.el
 !init.el
-!swisschamp.org
