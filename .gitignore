@@ -2,6 +2,7 @@
 /*
 !.gitignore
 !COPYING
+!README.org
 
 !/lisp
 !/snippets
