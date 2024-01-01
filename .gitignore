@@ -2,11 +2,9 @@
 /*
 !.gitignore
 !COPYING
-!README.org
+!readme.org
 
-!/lisp
-!/snippets
+!/modules
 
 !early-init.el
 !init.el
-!swisschamp.org

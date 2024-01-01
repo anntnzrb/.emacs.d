@@ -1,147 +1,127 @@
-;;; init.el --- Initialization file of GNU Emacs -*- lexical-binding: t; no-byte-compile: t; -*-
+;; GNU Emacs initialisation -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020-2022 anntnzrb
+(defvar annt/load-dirs '(; "lib/annt"
+			 "modules/annt")
+  "List of directories containing modules and libraries to add to `load-path'")
 
-;; Author: anntnzrb <anntnzrb@proton.me>
-;; Keywords: initialization
+(mapc
+ (lambda (dir)
+   (add-to-list 'load-path (locate-user-emacs-file dir)))
+ annt/load-dirs)
 
-;; This file is NOT part of GNU Emacs.
+(defvar annt/init--config-literate
+  (expand-file-name "readme.org" user-emacs-directory)
+  "File path of the literate configuration file.")
 
-;; This file is free software: you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
-
-;; This file is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
-
-;; You should have received a copy of the GNU General Public License
-;; along with this file.  If not, see <https://www.gnu.org/licenses/>.
-
-;;; Commentary:
-
-;; This initialization file configures the literate configuration file written
-;; in Org, it does so by checking when it was last updated and tangles it only
-;; when needed, loads the non-updated file otherwise.  The main goal here is to
-;; remove the unneeded tangling and improve startup time.
-
-;; There are a few other options I like to keep here, should be well-documented.
-
-;; Lastly, there a few benchmarks to debug the initialization.
-
-;;; Code:
-
-(defconst SWISSCHAMP--FILE "swisschamp"
-  "Base name of Swisschamp's configuration file.")
-
-;; Add extra paths, 'lisp/' contains core & helper definitions.
-(dolist (path '("lisp"))
-  (add-to-list 'load-path (locate-user-emacs-file path)))
-
-;;; Function definitions
-
-(defun swc-init--debug-init()
-  "Displays information related to initialization."
+(defun annt/init--tangle-literate-config ()
+  "Prompt to tangle literate configuration file."
   (interactive)
-  (let ((pkg-count 0)
-        (init-time (emacs-init-time)))
+  (when (and (equal (buffer-file-name) annt/init--config-literate)
+             (y-or-n-p "Save and tangle before exiting? "))
+    (save-buffer)
+    (org-babel-tangle)))
 
-    ;; package.el
-    (when (bound-and-true-p package-alist)
-      (setq pkg-count (length package-activated-list)))
+(add-hook 'kill-emacs-hook #'annt/init--tangle-literate-config)
 
-    ;; straight.el
-    (when (boundp 'straight--profile-cache)
-      (setq pkg-count (+ (hash-table-count straight--profile-cache) pkg-count)))
+(defmacro annt/helpers--add-hook (hooks functions &optional depth local)
+  "Replacement and wrapper for `add-hook'.
+Add N FUNCTIONS to M HOOKS. Both optional DEPTH and LOCAL arguments are passed
+to `add-hook'.
 
-    (swisschamp--notify-and-log
-     (format
-      "GNU Emacs initialized in %s (%d pkgs) :: performed %d garbage collections."
-      init-time pkg-count gcs-done))))
+NOTE: The mode hook should not be quoted."
+  (let ((hooksp (listp hooks))
+        (fnsp   (listp functions)))
+    (cond
+     ;; both HOOKS and FUNCTIONS are lists
+     ((and hooksp fnsp)
+      `(mapc (lambda (hk)
+               (mapc (lambda (fn)
+                       (add-hook 'hk fn ,depth ,local))
+                     ,functions))
+             ,hooks))
 
-(defun swisschamp--notify-and-log (message)
-  "Prints MESSAGE and logs it to a file in `user-emacs-directory' directory."
-  (message message)
+     ;; only HOOKS is a list
+     (hooksp
+      `(mapc (lambda (hk)
+               (add-hook 'hk ,functions ,depth ,local))
+             ,hooks))
 
-  ;; log to file (suppress stdout)
-  (let ((inhibit-message t)
-        (message-log-max nil))
-    (append-to-file
-     (format "[%s] :: %s\n" (current-time-string) message)
-     nil
-     (expand-file-name "emacs.log" user-emacs-directory))))
+     ;; only FUNCTIONS is a list
+     (fnsp
+      `(mapc (lambda (fn)
+               (add-hook ',hooks fn ,depth ,local))
+             ,functions))
 
-(defun swc-init--expand-file-name (file extension)
-  "Return canonical path to FILE to Emacs config with EXTENSION."
-  (locate-user-emacs-file
-   (concat file extension)))
+     ;; neither HOOKS nor FUNCTIONS is a list
+     ((not (or hooksp fnsp))
+      `(add-hook ',hooks ,functions ,depth ,local))
 
-(defun swc-init--org-tangle-and-byte-compile (file target-file)
-  "Tangle given FILE to TARGET-FILE and byte-compile it."
-  (require 'ob-tangle)
-  (org-babel-tangle-file file target-file)
-  (byte-compile-file          target-file))
+     ;; fallback to error message
+     (t `(error "Invalid arguments: hooks and functions should be either a symbol or a list")))))
 
-(defun swc-init--update-files ()
-  "If configuration files have been modified, update them.
-The Org file is compared with the tangled '.el' file; if the latter is older
-than the Org file, delete the '.el' file code and re-tangle it, byte-compile it
-afterwards."
-  (interactive)
-  (let* ((file SWISSCHAMP--FILE)
-         (file-org (swc-init--expand-file-name file ".org"))
-         (file-el  (swc-init--expand-file-name file ".el"))
-         (file-elc (swc-init--expand-file-name file ".elc")))
+(defalias 'add-hook! #'annt/helpers--add-hook)
 
-    (when (or (file-newer-than-file-p file-org file-el)
-              (not (file-exists-p file-elc)))
-      (swisschamp--notify-and-log "Deleting old configurations for update...")
-      (ignore-errors
-        (delete-file file-el  t)
-        (delete-file file-elc t))
-      (swc-init--org-tangle-and-byte-compile file-org file-el))))
+;;;###autoload
+(defun append-path (path)
+  "Add the specified PATH to the `exec-path' and 'PATH' environment variable."
+  (let ((expanded-path (expand-file-name path)))
+    (if (file-directory-p expanded-path)
+        (progn
+          (add-to-list 'exec-path expanded-path)
+          (setenv "PATH" (concat (getenv "PATH") path-separator expanded-path)))
+      (warn "Warning: %s is not a directory" expanded-path))))
 
-(defun swc-init--load-file ()
-  "Load the configuration file.
-This step should be done after tangling & byte-compiling."
-  (let* ((file SWISSCHAMP--FILE)
-         (file-org (swc-init--expand-file-name file ".org"))
-         (file-el  (swc-init--expand-file-name file ".el")))
+;;;###autoload
+(defun termbin-upload (start end)
+  "Uploads region between START and END to termbin.com and copies resulting URL.
 
-    ;; only tangle if '.el' file does not exists
-    (unless (file-exists-p file-el)
-      (swisschamp--notify-and-log "Literate configuration has not been tangled yet...")
-      (swisschamp--notify-and-log "Proceeding to tangle & byte-compile configuration...")
-      (swc-init--org-tangle-and-byte-compile file-org file-el)
-      (swisschamp--notify-and-log "Literate configuration was tangled & byte-compiled."))
+This function operates asynchronously."
+  (interactive "r")
+  (let* ((content (buffer-substring-no-properties start end))
+         (proc (make-process :name "termbin-upload"
+                             :command '("nc" "termbin.com" "9999")
+                             :connection-type 'pipe
+                             :buffer nil
+                             :filter (lambda (_ string)
+                                       (let ((trimmed-string (string-trim-right string "[\n\0]+")))
+                                         (message "Uploaded and copied URL: %s" trimmed-string)
+                                         (kill-new trimmed-string))))))
+    (message "Uploading...")
+    (process-send-string proc content)
+    (process-send-eof proc)))
 
-    ;; finally load the configuration file
-    (load file-el nil 'nomessage 'nosuffix)
-    (swisschamp--notify-and-log "Swisschamp configuration loaded.")))
+(use-package cus-edit
+  :config
+  (setopt custom-buffer-done-kill t))
 
-;;; Function definitions end here
+(setopt custom-file (make-temp-file "emacs-custom-file-"))
 
-;; a few settings...
-(setq frame-title-format
-      (format "%%b - GNU Emacs [%s] @ %s" window-system (system-name)))
+(use-package package
+  :config
+  (setopt package-vc-register-as-project nil)
+  (setopt package-archives
+          '(("gnu-elpa"       . "https://elpa.gnu.org/packages/")
+            ("gnu-elpa-devel" . "https://elpa.gnu.org/devel/")
+            ("nongnu"         . "https://elpa.nongnu.org/nongnu/")
+            ("melpa"          . "https://melpa.org/packages/")))
 
-;; set working directory to '~/' regardless of where Emacs was started from
-(cd (expand-file-name "~/"))
+  (setopt package-archive-priorities
+          '(("gnu-elpa" . 3)
+            ("melpa"    . 2)
+            ("nongnu"   . 1)))
 
-(add-hook 'emacs-startup-hook #'swc-init--debug-init t)
+  ;; disallow built-ins to be externally managed
+  (setopt package-install-upgrade-built-in t))
 
-;; set to both hooks to ensure config is always updated and byte-compiled, for
-;; startup times it's possible to only keep `kill-emacs-hook'.
-(add-hook 'emacs-startup-hook #'swc-init--update-files)
-(add-hook 'kill-emacs-hook    #'swc-init--update-files)
+(require 'annt-mod-simple)
+(require 'annt-mod-editing)
 
-(swc-init--load-file)
-
-(provide 'init)
-;;; init.el ends here
-
-;; Local Variables:
-;; read-symbol-shorthands: (("swc-" . "swisschamp-"))
-;; End:
+(require 'annt-mod-vi)
+(require 'annt-mod-org)
+(require 'annt-mod-file)
+(require 'annt-mod-dired)
+(require 'annt-mod-assist)
+(require 'annt-mod-modeline)
+(require 'annt-mod-appearance)
+(require 'annt-mod-completion)
+(require 'annt-mod-minibuffer)
