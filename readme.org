@@ -426,7 +426,7 @@ I honestly see more favorable using a regular text buffer...
 
 ** Editing
 
-*** Identation and the =TAB= key
+*** Indentation and the =TAB= key
 
 The following settings are global.  Refer to the language's proper
 section for specifics.
