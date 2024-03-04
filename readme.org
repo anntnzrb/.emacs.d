@@ -3,9 +3,9 @@
 #+email:  anntnzrb@protonmail.com
 
 #+language: en
-#+startup:  content indent
-#+options:  toc:nil author:t email:t
-#+property: header-args :results silent
+#+startup:  show2levels
+#+options:  author:t email:t
+#+property: header-args :tangle "init.el" :results silent
 
 # macros
 #+macro: export-date     (eval (format-time-string "%F" (current-time)))
@@ -24,7 +24,7 @@
 This section is responsible for the initial setup of Emacs. The setup
 procedure is executed before the normal configuration loading.
 
-#+begin_src emacs-lisp :tangle "early-init.el"
+#+begin_src emacs-lisp
 ;; GNU Emacs early initialisation -*- lexical-binding: t; -*-
 #+end_src
 
@@ -34,7 +34,7 @@ The following states the minimum required version of Emacs to use this
 configuration.  I do not plan on maintaining older or legacy versions.
 
 #+begin_src emacs-lisp :tangle "early-init.el"
-(let ((emacs-version-required "29.1"))
+(let ((emacs-version-required "29.2"))
   (cond ((version< emacs-version emacs-version-required)
          (error "Emacs %s or newer is required; you're running %s" emacs-version-required emacs-version))
         ((not (version= emacs-version emacs-version-required))
@@ -50,8 +50,8 @@ effectively deferred until Emacs has finished loading. After startup,
 these values are reset to more reasonable levels.
 
 #+begin_src emacs-lisp :tangle "early-init.el"
-(defvar annt--file-name-handler-alist file-name-handler-alist)
-(defvar annt--vc-handled-backends     vc-handled-backends)
+(defconst annt/init--file-name-handler-alist file-name-handler-alist)
+(defconst annt/init--vc-handled-backends     vc-handled-backends)
 
 (setopt gc-cons-threshold  most-positive-fixnum)
 (setopt gc-cons-percentage 0.5)
@@ -60,12 +60,12 @@ these values are reset to more reasonable levels.
 (setopt vc-handled-backends     nil)
 
 (add-hook 'emacs-startup-hook
-	  (lambda ()
-	    (progn
-	      (setopt gc-cons-threshold (* 1024 1024 20))
-	      (setopt gc-cons-percentage 0.2)
-	      (setopt file-name-handler-alist annt--file-name-handler-alist)
-	      (setopt vc-handled-backends annt--vc-handled-backends))))
+          (lambda ()
+            (progn
+              (setopt gc-cons-threshold (* 1024 1024 20))
+              (setopt gc-cons-percentage 0.2)
+              (setopt file-name-handler-alist annt/init--file-name-handler-alist)
+              (setopt vc-handled-backends annt/init--vc-handled-backends))))
 #+end_src
 
 ** Native compilation
@@ -111,28 +111,13 @@ I don't why this is a thing. Check [[https://yrh.dev/blog/rant-obfuscation-in-em
 ** Package initialization
 
 #+begin_src emacs-lisp :tangle "early-init.el"
-(setopt package-enable-at-startup t)
+(setopt package-enable-at-startup nil)
 #+end_src
 
 * Initialization
 
-#+begin_src emacs-lisp :tangle "init.el"
+#+begin_src emacs-lisp
 ;; GNU Emacs initialisation -*- lexical-binding: t; -*-
-#+end_src
-
-The load path is a list of directories that Emacs checks when loading
-or requiring libraries. It is used to modularize this Emacs
-configuration.
-
-#+begin_src emacs-lisp :tangle "init.el"
-(defvar annt/load-dirs '(; "lib/annt"
-			 "modules/annt")
-  "List of directories containing modules and libraries to add to `load-path'")
-
-(mapc
- (lambda (dir)
-   (add-to-list 'load-path (locate-user-emacs-file dir)))
- annt/load-dirs)
 #+end_src
 
 The following prompts the user to tangle the literate configuration
@@ -144,8 +129,8 @@ file before exiting (restarting) Emacs.
  the Org-mode document and writing them out to separate source code
  files.
 
-#+begin_src emacs-lisp :tangle "init.el"
-(defvar annt/init--config-literate
+#+begin_src emacs-lisp
+(defconst annt/init--config-literate
   (expand-file-name "readme.org" user-emacs-directory)
   "File path of the literate configuration file.")
 
@@ -167,7 +152,7 @@ enhance the configuring experience. The primary goal is to simplify and
 streamline common tasks, such as, but not limited to, adding =N= functions to
 =M= hooks in a single ~add-hook~ expression.
 
-#+begin_src emacs-lisp :tangle "init.el"
+#+begin_src emacs-lisp
 (defmacro annt/helpers--add-hook (hooks functions &optional depth local)
   "Replacement and wrapper for `add-hook'.
 Add N FUNCTIONS to M HOOKS. Both optional DEPTH and LOCAL arguments are passed
@@ -222,7 +207,7 @@ Examples:
 (append-path "~/scripts")
 #+end_example
 
-#+begin_src emacs-lisp :tangle "init.el"
+#+begin_src emacs-lisp
 ;;;###autoload
 (defun append-path (path)
   "Add the specified PATH to the `exec-path' and 'PATH' environment variable."
@@ -244,7 +229,7 @@ returns a unique URL where the data can be viewed in plain text.
 *NOTE*: this tool requires having the =nc= command present on your system; it
 should be very easy to install as it is widely packaged.
 
-#+begin_src emacs-lisp :tangle "init.el"
+#+begin_src emacs-lisp
 ;;;###autoload
 (defun termbin-upload (start end)
   "Uploads region between START and END to termbin.com and copies resulting URL.
@@ -267,7 +252,7 @@ This function operates asynchronously."
 
 ** Custom(isation)
 
-#+begin_src emacs-lisp :tangle "init.el"
+#+begin_src emacs-lisp
 (use-package cus-edit
   :config
   (setopt custom-buffer-done-kill t))
@@ -275,53 +260,43 @@ This function operates asynchronously."
 
 *** Custom file
 
-#+begin_src emacs-lisp :tangle "init.el"
+#+begin_src emacs-lisp
 (setopt custom-file (make-temp-file "emacs-custom-file-"))
 #+end_src
 
 ** Package management
 
-#+begin_src emacs-lisp :tangle "init.el"
-(use-package package
-  :config
-  (setopt package-vc-register-as-project nil)
-  (setopt package-archives
-          '(("gnu-elpa"       . "https://elpa.gnu.org/packages/")
-            ("gnu-elpa-devel" . "https://elpa.gnu.org/devel/")
-            ("nongnu"         . "https://elpa.nongnu.org/nongnu/")
-            ("melpa"          . "https://melpa.org/packages/")))
+#+begin_src emacs-lisp
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
-  (setopt package-archive-priorities
-          '(("gnu-elpa" . 3)
-            ("melpa"    . 2)
-            ("nongnu"   . 1)))
+;; use bleeding-edge straight.el
+(setopt straight-repository-branch "master")
 
-  ;; disallow built-ins to be externally managed
-  (setopt package-install-upgrade-built-in t))
-#+end_src
+;; do not fully clone repos, just not needed
+(setopt straight-vc-git-default-clone-depth 1)
 
-* Personal Modules
-
-My personal modules should be declared here.
-
-#+begin_src emacs-lisp :tangle "init.el"
-(require 'annt-mod-simple)
-(require 'annt-mod-editing)
-
-(require 'annt-mod-vi)
-(require 'annt-mod-org)
-(require 'annt-mod-file)
-(require 'annt-mod-dired)
-(require 'annt-mod-assist)
-(require 'annt-mod-modeline)
-(require 'annt-mod-appearance)
-(require 'annt-mod-completion)
-(require 'annt-mod-minibuffer)
+;; always prefer native compilation
+(setopt straight-disable-compile nil)
+(setopt straight-disable-native-compile nil)
 #+end_src
 
 ** Essentials
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-simple.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package emacs
   :config
 
@@ -335,13 +310,29 @@ My personal modules should be declared here.
 
 *** ~use-package~
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-simple.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package use-package
   :config
-  (setopt use-package-always-defer t)
+  ;; always lazy load packages, unless instructed otherwise; use `:demand' to do
+  ;; so, for extra info, see:
+  ;; <https://github.com/jwiegley/use-package#notes-about-lazy-loading>
+  (setopt use-package-verbose           nil)
+  (setopt use-package-always-defer        t)
+  (setopt use-package-check-before-init nil) ;; performance hit
+  (setopt use-package-compute-statistics  t)
+  (setopt use-package-ignore-unknown-keywords nil)
 
   ;; force using the "-hook" suffix, this should be default...
-  (setopt use-package-hook-name-suffix nil))
+  (setopt use-package-hook-name-suffix nil)
+
+  (defmacro annt/package--use-package-external-package (package &rest body)
+    "Wrapper around `use-package' with external package integration; `straight.el'
+  in this case.
+  PACKAGE and BODY are as in `use-package.'"
+    (declare (indent 1))
+    `(use-package ,package :straight t ,@body))
+
+  (defalias 'use-package! #'annt/package--use-package-external-package))
 #+end_src
 
 *** Emacs as a server
@@ -353,7 +344,7 @@ killed, the server is too.
 I don't particularly use this feature, yet I see it can be handy in some
 scenarios, and having the server started does not hurt either.
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-simple.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package server
   :demand t
   :config
@@ -362,47 +353,51 @@ scenarios, and having the server started does not hurt either.
     (server-start)))
 #+end_src
 
-*** Personal prefix
+*** Leader key & other Keymaps
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-simple.el" :mkdirp yes
-(defvar-keymap annt-prefix-map
-  :doc "annt's prefix keymap with multiple subkeymaps.")
+#+begin_src emacs-lisp
+(use-package keymap
+  :config
+  (defvar-keymap annt/keys--leader-prefix-map
+    :doc "annt's leader keymap.")
 
-(define-key global-map (kbd "C-z") annt-prefix-map)
+  (defun annt/misc--goto-emacs-config-directory ()
+    "Opens one's Emacs configuration directory."
+    (interactive)
+    (find-file user-emacs-directory))
+
+  (defun annt/misc--goto-emacs-config-file ()
+    "Opens one's Emacs configuration file."
+    (interactive)
+    (find-file (expand-file-name "readme.org" user-emacs-directory)))
+
+  (keymap-set global-map "C-z" annt/keys--leader-prefix-map)
+
+  :bind
+  (:map annt/keys--leader-prefix-map
+        ;; system
+        ("/ r" . restart-emacs)
+        ("/ q" . save-buffers-kill-terminal)
+
+        ;; buffer
+        ("b r" . restart-emacs)
+
+        ;; private configuration
+        ("f p d" . annt/misc--goto-emacs-config-directory)
+        ("f p p" . annt/misc--goto-emacs-config-file)))
 #+end_src
 
 *** Backups & Lock files
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-simple.el" :mkdirp yes
+#+begin_src emacs-lisp
 (setopt backup-inhibited nil)
 (setopt create-lockfiles nil)
 (setopt make-backup-files nil)
 #+end_src
 
-*** Initial buffer
-
-Start Emacs presented with the =*scratch*= buffer.
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-simple.el" :mkdirp yes
-(setopt initial-buffer-choice t)
-#+end_src
-
-*** Scratch
-
-By default, the initial buffer =*scratch*= runs the
-=lisp-interaction-mode= mode, to write ELisp, obviously.
-I honestly see more favorable using a regular text buffer...
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-simple.el" :mkdirp yes
-(use-package emacs
-  :config
-  (setopt initial-major-mode 'text-mode)
-  (setopt initial-scratch-message nil))
-#+end_src
-
 *** Scroll
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-simple.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package pixel-scroll
   :demand t
   :config
@@ -411,17 +406,67 @@ I honestly see more favorable using a regular text buffer...
 
 *** Help
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-simple.el" :mkdirp yes
+Refer to the [[Helpful][Helpful]] section.
+
+#+begin_src emacs-lisp
 (use-package help
   :config
   (setopt help-window-keep-selected t)
   (setopt help-window-select        t))
 #+end_src
 
-*** Provide
+*** Convenience
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-simple.el" :mkdirp yes
-(provide 'annt-mod-simple)
+**** Helpful
+
+#+begin_src emacs-lisp
+(use-package! helpful
+  :bind
+  (:map help-map
+        ("o" . helpful-symbol)
+        ("f" . helpful-callable)
+        ("v" . helpful-variable)
+        ("k" . helpful-key)
+        ("x" . helpful-command)))
+#+end_src
+
+**** which-key
+
+#+begin_src emacs-lisp
+(use-package! which-key
+  :defer 2
+  :config
+  (setopt which-key-lighter           "")
+  (setopt which-key-separator     " ➡ ")
+  (setopt which-key-prefix-prefix "... ")
+
+  (setopt which-key-add-column-padding     16)
+  (setopt which-key-max-display-columns     4)
+  (setopt which-key-max-description-length 40)
+
+  ;; timings
+  (setopt which-key-idle-delay            0.5)
+  (setopt which-key-idle-secondary-delay 0.25)
+
+  (which-key-mode +1))
+#+end_src
+
+** Buffers
+
+By default, the initial buffer =*scratch*= runs the =lisp-interaction-mode=
+mode, to write ELisp, obviously. I see far more favorable using a regular text
+buffer and switch if needed.
+
+#+begin_src emacs-lisp
+(use-package emacs
+  :config
+  (setopt initial-buffer-choice t) ;; *scratch* buffer
+  (setopt initial-major-mode 'text-mode)
+  (setopt initial-scratch-message nil)
+
+  :bind
+  (:map ctl-x-map
+        ("k" . kill-current-buffer)))
 #+end_src
 
 ** Editing
@@ -431,13 +476,13 @@ I honestly see more favorable using a regular text buffer...
 The following settings are global.  Refer to the language's proper
 section for specifics.
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-editing.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package emacs
   :config
-  (setq-default tab-width 4)
+  (setopt tab-width 4)
 
   ;; do not use tabs
-  (setq-default indent-tabs-mode nil)
+  (setopt indent-tabs-mode nil)
 
   ;; indent behaviour
   (setopt tab-always-indent 'complete)
@@ -448,7 +493,7 @@ section for specifics.
 
 *** Text Wrapping and Auto-Fill(ing)
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-editing.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package emacs
   :config
   (setopt fill-column 80)
@@ -459,14 +504,48 @@ section for specifics.
 
   :bind
   (:map ctl-x-map
-	("f" . nil)))
+        ("f" . nil)))
+#+end_src
+
+*** Vi emulation
+
+#+begin_src emacs-lisp
+(use-package! evil
+  :demand t
+  :init
+  (setopt evil-echo-state      nil)
+  (setopt evil-overriding-maps nil)
+  (setopt evil-want-fine-undo    t)
+  (setopt evil-want-keybinding nil)
+  (setopt evil-want-minibuffer nil)
+
+  ;; native undo-redo (emacs28+)
+  (setopt evil-undo-system 'undo-redo)
+
+  (evil-mode +1)
+
+  :bind
+  (:map evil-motion-state-map
+        ("C-z" . nil)))
+#+end_src
+
+**** Extras
+
+#+begin_src emacs-lisp
+(use-package! evil-collection
+  :demand t
+  :after evil
+  :config
+  (setopt evil-collection-want-unimpaired-p nil)
+
+  (evil-collection-init))
 #+end_src
 
 *** Miscellaneous
 
 Some other settings that I do not categorize in specifics.
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-editing.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package emacs
   :init
   (add-hook! emacs-startup-hook '(show-paren-mode))
@@ -476,91 +555,107 @@ Some other settings that I do not categorize in specifics.
   (setopt show-paren-context-when-offscreen 'child-frame))
 #+end_src
 
-*** Provide
+** Completion
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-editing.el" :mkdirp yes
-(provide 'annt-mod-editing)
+Suggested resources:
+- =completion-styles=
+- [[https://www.youtube.com/live/fnE0lXoe7Y0?si=29m2wSpmF-O1FwUN][Emacs Completion Explained - Andrew Tropin]]
+
+#+begin_src emacs-lisp
+(use-package emacs
+  :config
+  ;; FIXME: `setopt' fails
+  (setq completion-styles '(basic substring initials flex partial-completion orderless))
+
+  ;; do not need anything case-specific most of the time (?)
+  (setopt completion-ignore-case                t)
+  (setopt read-buffer-completion-ignore-case    t)
+  (setopt read-file-name-completion-ignore-case t))
 #+end_src
 
-** Appearance
+*** Orderless
 
-*** Themes
+Check the pertintent section regarding =completion-styles=.
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-appearance.el" :mkdirp yes
-(use-package ef-themes
-  :ensure t
+#+begin_src emacs-lisp
+(use-package! orderless
+  :defer 2
+  :config
+  (setopt orderless-matching-styles
+          '(orderless-prefixes orderless-regexp)))
+#+end_src
+
+** Modeline
+
+#+begin_src emacs-lisp
+(use-package! doom-modeline
+  :disabled t
   :demand t
   :config
-  (ef-themes-load-random 'dark)
+  (setopt doom-modeline-icon t)
 
-  :bind
-  (:map annt-prefix-map
-	("a t e SPC" . ef-themes-select)
-	("a t e e"   . ef-themes-load-random)))
+  ;; buffer
+  (setopt doom-modeline-buffer-name                    t)
+  (setopt doom-modeline-buffer-encoding                t)
+  (setopt doom-modeline-buffer-state-icon              t)
+  (setopt doom-modeline-buffer-file-name-style         'truncate-with-project)
+  (setopt doom-modeline-buffer-modification-icon       t)
+  (setopt doom-modeline-highlight-modified-buffer-name t)
+
+  (setopt doom-modeline-column-zero-based nil)
+  (setopt doom-modeline-total-line-number t)
+
+  ;; modal
+  (setopt doom-modeline-modal                      t)
+  (setopt doom-modeline-modal-icon                 t)
+  (setopt doom-modeline-modal-modern-icon          t)
+  (setopt doom-modeline-always-show-macro-register t)
+
+  ;; modes
+  (setopt doom-modeline-major-mode-icon       t)
+  (setopt doom-modeline-major-mode-color-icon t)
+  (setopt doom-modeline-minor-modes           nil)
+
+  (add-hook 'emacs-startup-hook  #'doom-modeline-mode))
 #+end_src
 
-*** Fonts
+*** Keycast
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-appearance.el" :mkdirp yes
-(use-package fontaine
-  :ensure t
-  :demand t
-  :init
-  (setq-default text-scale-remap-header-line t)
+#+begin_src emacs-lisp
+(use-package! keycast
+  :defer 2
+  :config
+  (setopt keycast-mode-line-format "%k%c%R")
+  ;; don't hide rest of the modeline
+  (setopt keycast-mode-line-remove-tail-elements nil) 
 
-  (setopt fontaine-presets
-          '((t
-             :bold-family nil
-             :bold-weight bold
-             :italic-family nil
-             :italic-slant italic
+  (defconst annt/keycast--events-disabled
+    '(mouse-event-p
+      mouse-movement-p
+      mwheel-scroll
+      pixel-scroll-precision
+      pixel-scroll-start-momentum)
+    "List of disabled events that keycast should ignore.")
 
-             :default-family "Iosevka Comfy"
-             :default-weight regular
-             :default-height 120
+  (defconst annt/keycast--events-typing
+    '(self-insert-command
+      org-self-insert-command
+      isearch-printing-char
+      isearch-delete-char)
+    "List of disabled events that keycast should interpret as typing.")
 
-             :fixed-pitch-family nil
-             :fixed-pitch-weight nil
-             :fixed-pitch-height 1.0
+  (mapc (lambda (ev)
+          (add-to-list 'keycast-substitute-alist `(,ev nil nil)))
+        annt/keycast--events-disabled)
 
-             :fixed-pitch-serif-family nil
-             :fixed-pitch-serif-weight nil
-             :fixed-pitch-serif-height 1.0
-
-             :variable-pitch-family nil
-             :variable-pitch-weight nil
-             :variable-pitch-height 2.0
-
-             :line-spacing nil)
-	    (big
-             :default-family "Jetbrains Mono Nerd Font"
-             :default-height 180)))
-
-  (fontaine-set-preset 't)
-
-  :bind
-  (:map annt-prefix-map
-	("a f f" . fontaine-set-face-font)
-	("a f SPC" . fontaine-set-preset)))
-#+end_src
-
-**** Icons
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-appearance.el" :mkdirp yes
-(use-package nerd-icons
-  :defer 3
-  :ensure t)
-#+end_src
-
-*** Provide
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-appearance.el" :mkdirp yes
-(provide 'annt-mod-appearance)
+  (mapc (lambda (ev)
+          (add-to-list 'keycast-substitute-alist `(,ev "." "Typing…")))
+        annt/keycast--events-typing))
 #+end_src
 
 ** Minibuffer
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-minibuffer.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package minibuffer
   :config
   (setopt minibuffer-default-prompt-format " [%s]")
@@ -585,9 +680,12 @@ Some other settings that I do not categorize in specifics.
 
 *** Vertico
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-minibuffer.el" :mkdirp yes
-(use-package vertico
-  :ensure t
+Suggested resources:
+
+- [[https://youtu.be/d3aaxOqwHhI?si=iHM9nYZP6JQIb-3W][Emacs: modern minibuffer packages (Vertico, Consult, etc.)]]
+
+#+begin_src emacs-lisp
+(use-package! vertico
   :config
   (setopt vertico-cycle    t)
   (setopt vertico-count   12)
@@ -597,18 +695,17 @@ Some other settings that I do not categorize in specifics.
 
   :bind
   (:map vertico-map
-	("C-j" . vertico-next)
-	("C-k" . vertico-previous))
+        ("C-j" . vertico-next)
+        ("C-k" . vertico-previous))
 
   :init
   (vertico-mode +1))
 #+end_src
 
-*** Marginalia
+A mini extension for [[Vertico][Vertico]] which extends it by displaying documentation.
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-minibuffer.el" :mkdirp yes
-(use-package marginalia
-  :ensure t
+#+begin_src emacs-lisp
+(use-package! marginalia
   :defer 1
   :config
   (setopt marginalia-align  'left)
@@ -620,171 +717,144 @@ Some other settings that I do not categorize in specifics.
 
 *** Icons
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-completion.el" :mkdirp yes
-(use-package nerd-icons-completion
-  :ensure t
+#+begin_src emacs-lisp
+(use-package! nerd-icons-completion
   :defer 3
   :config
   (nerd-icons-completion-mode +1))
 
-(use-package nerd-icons-completion
-  :ensure t
+(use-package! nerd-icons-completion
   :after marginalia
   :config
   (nerd-icons-completion-marginalia-setup))
 #+end_src
 
-*** Provide
+** Appearance
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-minibuffer.el" :mkdirp yes
-(provide 'annt-mod-minibuffer)
-#+end_src
+*** Themes
 
-** Modeline
-
-*** Keycast
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-modeline.el" :mkdirp yes
-(use-package keycast
-  :ensure t
-  :defer 2
-  :config
-  (setopt keycast-mode-line-format "%k%c%R")
-  ;; don't hide rest of the modeline
-  (setopt keycast-mode-line-remove-tail-elements nil) 
-
-  (defconst annt--keycast-events-disabled
-    '(mouse-event-p
-      mouse-movement-p
-      mwheel-scroll
-      pixel-scroll-precision
-      pixel-scroll-start-momentum)
-    "List of disabled events that keycast should ignore.")
-
-  (defconst annt--keycast-events-typing
-    '(self-insert-command
-      org-self-insert-command
-      isearch-printing-char
-      isearch-delete-char)
-    "List of disabled events that keycast should interpret as typing.")
-
-  (mapc (lambda (ev)
-          (add-to-list 'keycast-substitute-alist `(,ev nil nil)))
-        annt--keycast-events-disabled)
-
-  (mapc (lambda (ev)
-          (add-to-list 'keycast-substitute-alist `(,ev "." "Typing…")))
-        annt--keycast-events-typing)
-
-  (keycast-mode +1)
-
-  :bind
-  (:map annt-prefix-map
-        ("m k" . keycast-mode)))
-#+end_src
-
-*** Provide
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-modeline.el" :mkdirp yes
-(provide 'annt-mod-modeline)
-#+end_src
-
-
-** Completion
-
-Suggested resources:
-- =completion-styles=
-- [[https://www.youtube.com/live/fnE0lXoe7Y0?si=29m2wSpmF-O1FwUN][Emacs Completion Explained - Andrew Tropin]]
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-completion.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package emacs
+  :after custom
   :config
-  (setopt completion-styles '(basic substring initials flex partial-completion orderless))
-
-  ;; do not need anything case-specific most of the time (?)
-  (setopt completion-ignore-case                t)
-  (setopt read-buffer-completion-ignore-case    t)
-  (setopt read-file-name-completion-ignore-case t))
+  (let ((time (string-to-number (format-time-string "%H"))))
+    (defconst annt/themes--time-day-p (and (> time 9) (< time 18))
+      "Non-nil if the time of the day is daylight.")
+    (defconst annt/themes--time-night-p (not annt/themes--time-day-p)
+      "Non-nil if the time of the day is the dark night.")))
 #+end_src
 
-*** Orderless
-
-Check the pertintent section regarding =completion-styles=.
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-completion.el" :mkdirp yes
-(use-package orderless
-  :ensure t
-  :defer 2
+#+begin_src emacs-lisp
+(use-package modus-themes
+  :demand t
+  :init
+  (load-theme 'modus-operandi t t) ;; load; no enabling yet
   :config
-  (setopt orderless-matching-styles
-          '(orderless-prefixes orderless-regexp)))
-#+end_src
+  (setq modus-themes-links         '(background italic))
+  (setq modus-themes-region        '(no-extend bg-only accented))
+  (setq modus-themes-syntax        '(green-strings yellow-comments))
+  (setq modus-themes-mode-line     '(accented borderless))
+  (setq modus-themes-org-blocks    'greyscale)
+  (setq modus-themes-paren-match   '(bold underline))
+  (setq modus-themes-bold-constructs   t)
+  (setq modus-themes-italic-constructs t)
 
-*** Corfu
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-completion.el" :mkdirp yes
-(use-package corfu
-  :ensure t
-  :config
-  (setopt corfu-auto  t)
-  (setopt corfu-count 8)
-  (setopt corfu-cycle t)
-
-  (setopt corfu-min-width   20)
-  (setopt corfu-auto-delay  0.1)
-  (setopt corfu-auto-prefix 2)
-
-  ;; popupinfo
-  (setopt corfu-popupinfo-delay '(1.5 . 0.5))
+  ;; use operandi for daylight
+  (modus-themes-load-operandi)
 
   :bind
-  (:map corfu-map
-        ;; ignores completion candidates and jumping to newline
-        ("M-<return>" . newline))
-  :init
-  (global-corfu-mode    +1)
-  (corfu-popupinfo-mode +1))
+  (:map global-map
+        ("M-<f5>" . modus-themes-toggle)))
 #+end_src
 
-*** Provide
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-completion.el" :mkdirp yes
-(provide 'annt-mod-completion)
-#+end_src
-
-** Assistance
-
-*** which-key
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-assist.el" :mkdirp yes
-(use-package which-key
-  :ensure t
-  :defer 2
+#+begin_src emacs-lisp
+(use-package! ef-themes
+  :disabled t
+  :demand t
   :config
-  (setopt which-key-lighter           "")
-  (setopt which-key-separator     " ➡ ")
-  (setopt which-key-prefix-prefix "... ")
-
-  (setopt which-key-add-column-padding     16)
-  (setopt which-key-max-display-columns     4)
-  (setopt which-key-max-description-length 40)
-
-  ;; timings
-  (setopt which-key-idle-delay            0.5)
-  (setopt which-key-idle-secondary-delay 0.25)
-
-  (which-key-mode +1))
+  ;; use any dark theme for night
+  (when annt/themes--time-night-p
+    (ef-themes-load-random 'dark)))
 #+end_src
 
-*** Provide
+*** Fonts
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-assist.el" :mkdirp yes
-(provide 'annt-mod-assist)
+#+begin_src emacs-lisp
+(use-package! fontaine
+  :init
+  (setopt text-scale-remap-header-line t)
+
+  (setopt fontaine-presets
+          '(;
+            (iosevka-mononoki
+             :default-family "mononoki"
+             :variable-pitch-family "Iosevka Comfy Motion"
+             :variable-pitch-weight semilight)
+
+            (mononoki-iosevka
+             :default-family "Iosevka Comfy Motion"
+             :variable-pitch-family "mononoki"
+             :variable-pitch-weight semilight)
+
+            ;; fallback
+            (default)
+            (t
+             :default-family nil
+             :default-weight regular
+             :default-height 130
+
+             :variable-pitch-family nil
+             :variable-pitch-weight nil
+             :variable-pitch-height 1.0
+
+             :fixed-pitch-family nil
+             :fixed-pitch-weight nil
+             :fixed-pitch-height 1.0
+
+             :fixed-pitch-serif-family nil
+             :fixed-pitch-serif-weight nil
+             :fixed-pitch-serif-height 1.0
+
+             :bold-family nil
+             :bold-weight bold
+             :italic-family nil
+             :italic-slant italic
+
+             :line-spacing nil)))
+
+  ;; Set last preset or fall back to desired style from `fontaine-presets'.
+  (fontaine-set-preset (or (fontaine-restore-latest-preset) 'default))
+
+  (add-hook 'kill-emacs-hook        #'fontaine-store-latest-preset)
+  (add-hook 'enable-theme-functions #'fontaine-apply-current-preset))
+#+end_src
+
+**** Icons
+
+#+begin_src emacs-lisp
+(use-package! nerd-icons :defer 3)
+#+end_src
+
+** Org
+
+#+begin_src emacs-lisp
+(use-package org
+  :config
+  (setopt org-src-window-setup       'current-window)
+  (setopt org-src-fontify-natively   t)
+  (setopt org-confirm-babel-evaluate nil)
+
+  ;; identation
+  (setopt org-src-preserve-indentation     t)
+  (setopt org-edit-src-content-indentation 0)
+
+  ;; use major mode's tabs for src blocks
+  (setopt org-src-tab-acts-natively t))
 #+end_src
 
 ** Dired
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-dired.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package dired
   :init
   (add-hook! dired-mode-hook '(dired-hide-details-mode hl-line-mode))
@@ -823,7 +893,7 @@ Check the pertintent section regarding =completion-styles=.
 
 **** Writable Dired
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-dired.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package wdired
   :after dired
   :config
@@ -833,9 +903,8 @@ Check the pertintent section regarding =completion-styles=.
 
 **** Dired Tree
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-dired.el" :mkdirp yes
-(use-package dired-subtree
-  :ensure t
+#+begin_src emacs-lisp
+(use-package! dired-subtree
   :after dired
   :bind
   (:map dired-mode-map
@@ -845,83 +914,11 @@ Check the pertintent section regarding =completion-styles=.
 
 **** Icons
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-dired.el" :mkdirp yes
-(use-package nerd-icons-dired
-  :ensure t
+#+begin_src emacs-lisp
+(use-package! nerd-icons-dired
   :after dired
   :init
   (add-hook! dired-mode-hook '(nerd-icons-dired-mode)))
-#+end_src
-
-*** Provide
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-dired.el" :mkdirp yes
-(provide 'annt-mod-dired)
-#+end_src
-
-** Org
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-org.el" :mkdirp yes
-(use-package org
-  :config
-  (setopt org-src-window-setup       'current-window)
-  (setopt org-src-fontify-natively   t)
-  (setopt org-confirm-babel-evaluate nil)
-
-  ;; identation
-  (setopt org-src-preserve-indentation     t)
-  (setopt org-edit-src-content-indentation 0)
-
-  ;; use major mode
-  (setopt org-src-tab-acts-natively t))
-#+end_src
-
-*** Provide
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-org.el" :mkdirp yes
-(provide 'annt-mod-org)
-#+end_src
-
-** Vi[m] emulation
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-vi.el" :mkdirp yes
-(use-package evil
-  :ensure t
-  :demand t
-  :init
-  (setopt evil-echo-state      nil)
-  (setopt evil-overriding-maps nil)
-  (setopt evil-want-fine-undo    t)
-  (setopt evil-want-keybinding nil)
-  (setopt evil-want-minibuffer nil)
-
-  ;; native undo-redo
-  (setopt evil-undo-system 'undo-redo)
-
-  (evil-mode +1)
-
-  :bind
-  (:map evil-motion-state-map
-	("C-z" . nil)))
-#+end_src
-
-*** Extras
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-vi.el" :mkdirp yes
-(use-package evil-collection
-  :ensure t
-  :demand t
-  :after evil
-  :config
-  (setopt evil-collection-want-unimpaired-p nil)
-
-  (evil-collection-init))
-#+end_src
-
-*** Provide
-
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-vi.el" :mkdirp yes
-(provide 'annt-mod-vi)
 #+end_src
 
 ** Files, Projects and Queries
@@ -933,65 +930,70 @@ Check the pertintent section regarding =completion-styles=.
 Suggested resources:
 
 - [[https://youtu.be/f2mQXNnChwc?si=7yCMeU3-0W2qnFR6][Emacs: search and replace basics - Protesilaos]]
+- [[https://youtu.be/d3aaxOqwHhI?si=iHM9nYZP6JQIb-3W][Emacs: modern minibuffer packages (Vertico, Consult, etc.)]]
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-file.el" :mkdirp yes
-(use-package consult
-  :ensure t
+#+begin_src emacs-lisp
+(use-package! consult
   :bind
   (:map goto-map
-	    ("i"   . consult-imenu)
-	    ("g"   . consult-goto-line)
-	    ("M-g" . consult-goto-line)
-	    ("o"   . consult-outline))
+        ("i"   . consult-imenu)
+        ("g"   . consult-goto-line)
+        ("M-g" . consult-goto-line)
+        ("o"   . consult-outline))
   (:map search-map
-	    ("@"   . consult-kmacro)
-	    ("d"   . consult-fd)
-	    ("g"   . consult-ripgrep)
-	    ("s"   . consult-line)
-	    ("M-s" . consult-line)
+        ("@"   . consult-kmacro)
+        ("d"   . consult-fd)
+        ("g"   . consult-ripgrep)
+        ("s"   . consult-line)
+        ("M-s" . consult-line)
         ("i" . consult-info))
   (:map ctl-x-map
-	    ("b" . consult-buffer)
+        ("b" . consult-buffer)
 
         ;; ctl-x-4-map
-	    ("4 b" . consult-buffer-other-window)
+        ("4 b" . consult-buffer-other-window)
 
         ;; ctl-x-r-map
-	    ("r b" . consult-bookmark)
+        ("r b" . consult-bookmark)
 
         ;; project map
-	    ("p b" . consult-project-buffer))
+        ("p b" . consult-project-buffer))
+  (:map annt/keys--leader-prefix-map
+        ("b b" . consult-buffer))
   (:map minibuffer-local-map
-        ("M-r" . consult-history))
-  (:map annt-prefix-map
-        ("a t t" . consult-theme)))
+        ("M-r" . consult-history)))
 #+end_src
 
 *** Version Control
 
 **** Magit
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-file.el" :mkdirp yes
-(use-package magit
-  :ensure t
+#+begin_src emacs-lisp
+(use-package! magit
   :config
   (setopt magit-define-global-key-bindings nil)
 
   :bind
-  (:map annt-prefix-map
-	    ("g g" . magit-status)))
+  (:map global-map
+        ("C-c g g" . magit-status)))
 #+end_src
 
 *** Projects
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-file.el" :mkdirp yes
+#+begin_src emacs-lisp
 (use-package project
   :config
   (setopt project-kill-buffers-display-buffer-list t))
 #+end_src
 
-*** Provide
+** Languages
 
-#+begin_src emacs-lisp :tangle "modules/annt/annt-mod-file.el" :mkdirp yes
-(provide 'annt-mod-file)
+#+begin_src emacs-lisp
+(use-package! nix-mode
+  :mode "\\.nix\\'"
+  :init
+  ;; treat flake.lock files as json
+  (add-to-list 'auto-mode-alist (cons "/flake\\.lock\\'" 'js-mode))
+  :config
+  (add-hook 'nix-mode-local-vars-hook #'tree-sitter! 'append))
 #+end_src
