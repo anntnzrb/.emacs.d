@@ -2,8 +2,9 @@
 /*
 !.gitignore
 
-!readme.org
+!README.md
 !early-init.el
 !init.el
+!modules/
 
 !COPYING
