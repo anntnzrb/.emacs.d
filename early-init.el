@@ -1,4 +1,4 @@
-;;; early-init.el --- GNU Emacs >= 29.4 pre-initialization file-*- lexical-binding: t; no-byte-compile: t; -*-
+;;; early-init.el --- GNU Emacs pre-initialization file-*- lexical-binding: t; no-byte-compile: t; -*-
 
 ;; Copyright (C) 2020-2024 anntnzrb
 
@@ -29,10 +29,16 @@
 ;;; Code:
 
 ;; check if using minimum required version
-(let ((min-ver "29.0"))
+(let ((min-ver "30.0"))
   (when (version< emacs-version min-ver)
     (error "Your version of GNU Emacs v%s is outdated, you need at least v%s"
            emacs-version min-ver)))
+
+;; explicitely set Emacs' directory for this profile
+(setopt user-emacs-directory
+	(file-name-as-directory
+	 (concat (or (getenv "XDG_CONFIG_HOME") (expand-file-name "~/.config"))
+		 "/emacs")))
 
 ;;; Optimization tweaks
 
@@ -73,47 +79,54 @@
 
 ;;; Native Compilation
 
-;; emacs28+
-(use-package emacs
-  :if (and (fboundp 'native-comp-available-p) (native-comp-available-p))
-  :custom
-  (native-comp-async-report-warnings-errors 'silent)
-  ;; Prevent compilation at runtime
-  (native-comp-deferred-compilation nil))
+;; disable byte-compilation warnings from native-compiled packages
+(setopt native-comp-async-report-warnings-errors 'silent)
+;; prevent compilation at runtime
+(setopt native-comp-deferred-compilation nil)
 
 ;;; Native Compilation ends here
 
-;; explicitely set Emacs' directory for this profile
-(setopt user-emacs-directory
-      (file-name-as-directory
-       (concat (or (getenv "XDG_CONFIG_HOME") (expand-file-name "~/.config"))
-               "/emacs")))
-
 ;;; GUI
-(use-package emacs
-  :custom
-  (inhibit-splash-screen t)
-  (inhibit-startup-screen t)
-  (frame-inhibit-implied-resize t) ;; don't frame-resize this early
 
-  ;; dialogs preferably disabled for a totally keyboard-driven experience
-  (use-dialog-box  nil)
-  (use-file-dialog nil)
+;;; Splash
+(setopt inhibit-x-resources t)
+(setopt inhibit-splash-screen t)
+(setopt inhibit-startup-screen t)
+(setopt inhibit-startup-buffer-menu t)
 
-  ;; disable redisplay as it is not really needed, enable afterwards.
-  (inhibit-redisplay t)
+;;; Frame
+(setopt frame-title-format
+	(format "%%b - GNU Emacs @ %s" (system-name)))
 
-  :config
-  (menu-bar-mode   -1)
-  (tool-bar-mode   -1)
-  (scroll-bar-mode -1)
+;;; Bars
+(setopt scroll-bar-mode nil)
+(setopt tool-bar-mode nil)
+;; disable menu-bar on non-darwin systems
+(unless (eq (window-system) 'ns)
+  (setopt menu-bar-mode nil))
 
-  ;; supress echo area startup message
-  (fset 'display-startup-echo-area-message (lambda ()))
-  :hook
-  (window-setup-hook . (lambda ()
-			 (setopt inhibit-redisplay nil)
-			 (redisplay))))
+;;; Fringe
+(setopt fringe-mode '(4 . 0))
+
+;;; Misc
+(setopt ring-bell-function 'ignore) ;; suppress beep sound
+
+;;; Dialogs
+(setopt use-dialog-box nil)
+(setopt use-file-dialog nil)
+
+;; disable redisplay as it is not really needed, enable afterwards
+(setopt frame-inhibit-implied-resize t) ;; don't frame-resize this early
+(setopt inhibit-redisplay t)
+(add-hook 'window-setup-hook (lambda ()
+			       (setopt inhibit-redisplay nil)
+			       (redisplay)))
+
+;; supress echo area startup message
+(fset 'display-startup-echo-area-message (lambda ()))
+
+;; launch Emacs in fullscreen
+(add-to-list 'default-frame-alist '(fullscreen . fullboth))
 
 ;;; GUI ends here
 
